@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "779328678183",
+    "firebase_url": "https://charcoal-2fe4b-default-rtdb.firebaseio.com",
+    "project_id": "charcoal-2fe4b",
+    "storage_bucket": "charcoal-2fe4b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:779328678183:android:f35b142127c4f178b16102",
+        "android_client_info": {
+          "package_name": "com.coal.charcoal_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC48YtOUQIoYOB_RoCxX4EeyvobgqTrRhQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
