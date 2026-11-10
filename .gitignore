@@ -47,5 +47,10 @@ app.*.map.json
 # Archives
 *.zip
 
+# Node / Web dependencies
+node_modules/
+dist/
+.vite/
+
 # Widget Preview related
 .widget_preview/
