@@ -5,6 +5,15 @@ import '../../driver/models/driver_model.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/validators.dart';
 
+class EmailNotVerifiedException implements Exception {
+  final String email;
+  const EmailNotVerifiedException(this.email);
+
+  @override
+  String toString() =>
+      'Please verify your email address ($email) using the link sent to your inbox.';
+}
+
 class ResolvedSession {
   final String role; // 'customer' | 'driver'
   final AppUser? customer;
@@ -35,13 +44,28 @@ class AuthService {
       return null;
     }
 
-    final appUser = AppUser.fromMap(user.uid, userSnap.value as Map<dynamic, dynamic>);
+    var appUser = AppUser.fromMap(user.uid, userSnap.value as Map<dynamic, dynamic>);
     if (!appUser.isActive) {
       await _auth.signOut();
       return null;
     }
 
     if (appUser.role == 'customer') {
+      try {
+        await user.reload();
+      } catch (_) {}
+      final refreshed = _auth.currentUser;
+      final isFirebaseVerified = refreshed?.emailVerified ?? user.emailVerified;
+      if (!isFirebaseVerified && !appUser.emailVerified) {
+        await _auth.signOut();
+        return null;
+      }
+      if (isFirebaseVerified && !appUser.emailVerified) {
+        await _database.ref('${AppConstants.dbUsers}/${user.uid}').update({
+          'emailVerified': true,
+        });
+        appUser = _withEmailVerified(appUser);
+      }
       return ResolvedSession(role: 'customer', customer: appUser);
     }
 
@@ -80,7 +104,23 @@ class AuthService {
     return const {'firstName': '', 'middleName': '', 'lastName': ''};
   }
 
-  // 1. Customer Registration
+  AppUser _withEmailVerified(AppUser u) {
+    return AppUser(
+      uid: u.uid,
+      email: u.email,
+      name: u.name,
+      firstName: u.firstName,
+      middleName: u.middleName,
+      lastName: u.lastName,
+      phone: u.phone,
+      role: u.role,
+      isActive: u.isActive,
+      emailVerified: true,
+      createdAt: u.createdAt,
+    );
+  }
+
+  // 1. Customer Registration + Built-in Firebase Email Verification Link
   Future<AppUser> registerCustomer({
     required String firstName,
     String middleName = '',
@@ -88,7 +128,6 @@ class AuthService {
     required String phone,
     required String email,
     required String password,
-    bool emailVerified = false,
   }) async {
     final cleanEmail = email.trim().toLowerCase();
     final cleanFirst = Validators.sanitizeText(firstName);
@@ -117,7 +156,7 @@ class AuthService {
       phone: cleanPhone,
       role: 'customer',
       isActive: true,
-      emailVerified: emailVerified,
+      emailVerified: false,
       createdAt: DateTime.now().toIso8601String(),
     );
 
@@ -130,10 +169,44 @@ class AuthService {
       } catch (_) {}
       rethrow;
     }
+
+    try {
+      await user.updateDisplayName(cleanName);
+    } catch (_) {}
+    await user.sendEmailVerification();
+
     return appUser;
   }
 
-  // 2. Customer Sign In (with strict DB profile + active check)
+  /// Sends a fresh Firebase verification link to the currently signed-in user.
+  Future<void> resendVerificationEmail() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('No active registration session found. Please log in again.');
+    }
+    await user.sendEmailVerification();
+  }
+
+  /// Reloads FirebaseAuth user and syncs `emailVerified: true` into RTDB once verified.
+  Future<AppUser?> checkAndSyncEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+
+    await user.reload();
+    final refreshed = _auth.currentUser;
+    if (refreshed == null || !refreshed.emailVerified) {
+      return null;
+    }
+
+    final userRef = _database.ref('${AppConstants.dbUsers}/${refreshed.uid}');
+    await userRef.update({'emailVerified': true});
+
+    final snap = await userRef.get();
+    if (!snap.exists || snap.value is! Map) return null;
+    return AppUser.fromMap(refreshed.uid, snap.value as Map<dynamic, dynamic>);
+  }
+
+  // 2. Customer Sign In (with strict DB profile + active + email verified check)
   Future<AppUser> signInCustomer({
     required String email,
     required String password,
@@ -151,7 +224,7 @@ class AuthService {
       );
     }
 
-    final appUser = AppUser.fromMap(cred.user!.uid, snap.value as Map<dynamic, dynamic>);
+    var appUser = AppUser.fromMap(cred.user!.uid, snap.value as Map<dynamic, dynamic>);
     if (appUser.role != 'customer') {
       await _auth.signOut();
       throw Exception('This account is not a Customer account. Please use the correct portal.');
@@ -159,6 +232,24 @@ class AuthService {
     if (!appUser.isActive) {
       await _auth.signOut();
       throw Exception('This account has been deactivated. Please contact Admin.');
+    }
+
+    try {
+      await cred.user!.reload();
+    } catch (_) {}
+    final refreshed = _auth.currentUser;
+    final isFirebaseVerified = refreshed?.emailVerified ?? cred.user!.emailVerified;
+
+    if (!isFirebaseVerified && !appUser.emailVerified) {
+      // Keep signed-in session briefly so login dialog can resend/reload verification
+      throw EmailNotVerifiedException(refreshed?.email ?? appUser.email);
+    }
+
+    if (isFirebaseVerified && !appUser.emailVerified) {
+      await _database.ref('${AppConstants.dbUsers}/${cred.user!.uid}').update({
+        'emailVerified': true,
+      });
+      appUser = _withEmailVerified(appUser);
     }
     return appUser;
   }

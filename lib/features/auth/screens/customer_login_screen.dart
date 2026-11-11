@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../widgets/email_verification_dialog.dart';
 import 'customer_register_screen.dart';
 import '../../order/screens/customer_home_screen.dart';
 import '../../../core/theme/app_theme.dart';
@@ -128,6 +130,34 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
           MaterialPageRoute(builder: (_) => CustomerHomeScreen(currentUser: user)),
           (route) => false,
         );
+      }
+    } on EmailNotVerifiedException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      final verifiedUser = await showDialog<AppUser?>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => EmailVerificationDialog(
+          email: e.email,
+          authService: _authService,
+        ),
+      );
+
+      if (!mounted) return;
+      if (verifiedUser != null) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => CustomerHomeScreen(currentUser: verifiedUser)),
+          (route) => false,
+        );
+      } else {
+        await _authService.signOut();
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Please verify your email link before logging in.';
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
