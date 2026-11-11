@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut,
 } from 'firebase/auth';
 import { ref, get, set } from 'firebase/database';
 import { auth, db } from '../firebase';
 import { validateEmail, validateName, validateStrongPassword, sanitizeText } from '../utils/validators';
-import { Flame, Lock, Mail, ShieldCheck, AlertCircle, User } from 'lucide-react';
+import { Flame, Lock, Mail, ShieldCheck, AlertCircle, User, CheckCircle2, KeyRound } from 'lucide-react';
 
 export default function Login({ externalError, isSettingUpRef, onAdminInitialized }) {
   const [isSetupMode, setIsSetupMode] = useState(false);
@@ -16,7 +17,12 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(externalError || '');
+  const [notice, setNotice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetBusy, setResetBusy] = useState(false);
 
   useEffect(() => {
     if (externalError) setError(externalError);
@@ -32,7 +38,6 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
           setCanInitializeAdmin(true);
         }
       } catch {
-        // Keep setup toggle available if unauthenticated read is blocked by rules
         setCanInitializeAdmin(true);
       }
     };
@@ -43,6 +48,7 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
     e.preventDefault();
     if (isSubmitting) return;
     setError('');
+    setNotice('');
 
     const emailErr = validateEmail(email);
     if (emailErr) {
@@ -92,6 +98,7 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
           name: cleanName,
           phone: '',
           role: 'admin',
+          isActive: true,
           createdAt: new Date().toISOString(),
         });
         await set(ref(db, 'admins_initialized'), true);
@@ -102,12 +109,15 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
         }
       } else {
         const cred = await signInWithEmailAndPassword(auth, cleanEmail, password);
-        const roleSnap = await get(ref(db, `users/${cred.user.uid}/role`));
-        const role = roleSnap.exists() ? roleSnap.val() : null;
+        const userSnap = await get(ref(db, `users/${cred.user.uid}`));
+        const userData = userSnap.exists() ? userSnap.val() : null;
 
-        if (role !== 'admin') {
+        if (!userData || userData.role !== 'admin') {
           await signOut(auth);
           setError('Access denied. Only authorized Admin accounts can open this dashboard.');
+        } else if (userData.isActive === false) {
+          await signOut(auth);
+          setError('This Admin account has been deactivated.');
         }
       }
     } catch (err) {
@@ -134,6 +144,31 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
     }
   };
 
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    if (resetBusy) return;
+    setError('');
+    setNotice('');
+
+    const emailErr = validateEmail(resetEmail);
+    if (emailErr) {
+      setError(emailErr);
+      return;
+    }
+
+    setResetBusy(true);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail.trim().toLowerCase());
+      setShowResetModal(false);
+      setNotice(`Password reset link sent to ${resetEmail.trim().toLowerCase()}. Check your inbox or spam folder.`);
+      setResetEmail('');
+    } catch (err) {
+      setError(err.message || 'Failed to send password reset email.');
+    } finally {
+      setResetBusy(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-charcoal-canvas flex items-center justify-center p-4 text-charcoal-ink">
       <div className="w-full max-w-md bg-white border border-charcoal-border rounded-3xl p-7 shadow-lg">
@@ -153,6 +188,13 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
           <div className="mb-5 p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2.5 text-xs text-rose-700">
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
             <span>{error}</span>
+          </div>
+        )}
+
+        {notice && (
+          <div className="mb-5 p-3 rounded-xl bg-[#E8F3EC] border border-[#B7DFC7] flex items-start gap-2.5 text-xs text-charcoal-eco font-semibold">
+            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{notice}</span>
           </div>
         )}
 
@@ -192,7 +234,22 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
           </div>
 
           <div>
-            <label className="block text-charcoal-ink font-semibold mb-1.5">Password</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-charcoal-ink font-semibold">Password</label>
+              {!isSetupMode && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError('');
+                    setResetEmail(email);
+                    setShowResetModal(true);
+                  }}
+                  className="text-[11px] font-semibold text-charcoal-eco hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              )}
+            </div>
             <div className="relative">
               <Lock className="w-4 h-4 text-charcoal-muted absolute left-3.5 top-3" />
               <input
@@ -227,6 +284,7 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
               type="button"
               onClick={() => {
                 setError('');
+                setNotice('');
                 setIsSetupMode(!isSetupMode);
               }}
               className="w-full py-2 px-3 rounded-xl bg-charcoal-canvas hover:bg-charcoal-sage/50 border border-charcoal-border text-xs text-charcoal-header font-semibold transition-colors"
@@ -236,6 +294,47 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
           </div>
         )}
       </div>
+
+      {/* Password Reset Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white border border-charcoal-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <div className="flex items-center gap-2 mb-2">
+              <KeyRound className="w-5 h-5 text-charcoal-header" />
+              <h3 className="font-bold text-base text-charcoal-ink">Reset Admin Password</h3>
+            </div>
+            <p className="text-xs text-charcoal-muted mb-4">
+              Ilagay ang registered admin email address para magpadala ng password reset link.
+            </p>
+            <form onSubmit={handlePasswordReset} className="space-y-4 text-xs">
+              <input
+                type="email"
+                required
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                placeholder="admin@charcoal.ph"
+                className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 text-charcoal-ink focus:outline-none focus:border-charcoal-header"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(false)}
+                  className="px-4 py-2 bg-charcoal-canvas border border-charcoal-border rounded-xl font-semibold text-charcoal-ink"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetBusy}
+                  className="px-4 py-2 bg-charcoal-header hover:bg-charcoal-dark disabled:opacity-60 text-white rounded-xl font-bold"
+                >
+                  {resetBusy ? 'Sending...' : 'Send Reset Link'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -26,6 +26,76 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
     super.dispose();
   }
 
+  Future<void> _handleForgotPassword() async {
+    final resetCtrl = TextEditingController(text: _emailCtrl.text.trim());
+    String? dialogErr;
+
+    final sentTo = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: AppTheme.cardWhite,
+          title: const Text('Reset Password', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.inkCharcoal)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ilagay ang iyong email address para padalhan ng password reset link.',
+                style: TextStyle(fontSize: 12, color: AppTheme.mutedSlate),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: resetCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email Address',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+              ),
+              if (dialogErr != null) ...[
+                const SizedBox(height: 8),
+                Text(dialogErr!, style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedSlate)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final err = Validators.validateEmail(resetCtrl.text);
+                if (err != null) {
+                  setDialogState(() => dialogErr = err);
+                  return;
+                }
+                try {
+                  await _authService.sendPasswordReset(resetCtrl.text);
+                  if (ctx.mounted) Navigator.pop(ctx, resetCtrl.text.trim());
+                } catch (e) {
+                  setDialogState(() => dialogErr = 'Hindi maipadala ang reset link. I-check ang email.');
+                }
+              },
+              child: const Text('Send Link'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    resetCtrl.dispose();
+    if (sentTo != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppTheme.emeraldGreen,
+          content: Text('Naipadala ang password reset link sa $sentTo.'),
+        ),
+      );
+    }
+  }
+
   Future<void> _handleLogin() async {
     if (_isLoading) return;
 
@@ -49,19 +119,20 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
       );
 
       if (mounted) {
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
             builder: (_) => CustomerHomeScreen(currentUser: user),
           ),
+          (route) => false,
         );
       }
     } catch (e) {
       if (mounted) {
         final msg = e.toString().replaceAll('Exception: ', '');
         setState(() {
-          _errorMessage = msg.contains('firebase') || msg.contains('Exception')
-              ? 'Hindi makapag-log in. Pakitingnan ang email at password.'
+          _errorMessage = msg.contains('firebase_auth')
+              ? 'Mali ang email o password. Pakisubukan muli.'
               : msg;
         });
       }
@@ -73,9 +144,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Customer Login'),
-      ),
+      appBar: AppBar(title: const Text('Customer Login')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -142,7 +211,17 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                   prefixIcon: Icon(Icons.lock_outline),
                 ),
               ),
-              const SizedBox(height: 24),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: _handleForgotPassword,
+                  child: const Text(
+                    'Forgot Password?',
+                    style: TextStyle(color: AppTheme.emeraldGreen, fontWeight: FontWeight.w600, fontSize: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
 
               ElevatedButton(
                 onPressed: _isLoading ? null : _handleLogin,

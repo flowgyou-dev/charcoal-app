@@ -4,47 +4,67 @@
       ".read": true,
       ".write": "auth != null && !data.exists() && newData.val() === true"
     },
+    "settings": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      ".validate": "newData.hasChildren(['hubName', 'hubLat', 'hubLng', 'deliveryFeeMode', 'flatDeliveryFee', 'distanceBaseFee', 'distancePerKm']) && newData.child('hubName').isString() && newData.child('hubName').val().length >= 2 && newData.child('hubName').val().length <= 100 && newData.child('hubLat').isNumber() && newData.child('hubLng').isNumber() && (newData.child('deliveryFeeMode').val() === 'flat' || newData.child('deliveryFeeMode').val() === 'distance') && newData.child('flatDeliveryFee').isNumber() && newData.child('flatDeliveryFee').val() >= 0 && newData.child('flatDeliveryFee').val() <= 10000 && newData.child('distanceBaseFee').isNumber() && newData.child('distanceBaseFee').val() >= 0 && newData.child('distanceBaseFee').val() <= 10000 && newData.child('distancePerKm').isNumber() && newData.child('distancePerKm').val() >= 0 && newData.child('distancePerKm').val() <= 1000 && (!newData.child('paymentQrImage').exists() || (newData.child('paymentQrImage').isString() && newData.child('paymentQrImage').val().length <= 450000))"
+    },
     "users": {
       "$uid": {
         ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (auth.uid === $uid && (!newData.exists() || newData.child('role').val() === 'customer' || (!root.child('admins_initialized').exists() && newData.child('role').val() === 'admin'))))",
-        ".validate": "!newData.exists() || (newData.hasChildren(['email', 'name', 'role']) && newData.child('email').isString() && newData.child('email').val().length <= 100 && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 60 && (newData.child('role').val() === 'customer' || newData.child('role').val() === 'driver' || newData.child('role').val() === 'admin'))"
+        ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin' && !(auth.uid === $uid && !newData.exists())) || (auth.uid === $uid && (!newData.exists() || ((newData.child('role').val() === 'customer' || (!root.child('admins_initialized').exists() && newData.child('role').val() === 'admin')) && (!data.exists() || newData.child('role').val() === data.child('role').val()) && (!newData.child('isActive').exists() || newData.child('isActive').val() === true)))))",
+        ".validate": "!newData.exists() || (newData.hasChildren(['email', 'name', 'role']) && newData.child('email').isString() && newData.child('email').val().length <= 100 && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 60 && (newData.child('role').val() === 'customer' || newData.child('role').val() === 'driver' || newData.child('role').val() === 'admin') && (!newData.child('isActive').exists() || newData.child('isActive').isBoolean()))"
       }
     },
     "drivers": {
-      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'driver')",
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
       "$driverId": {
         ".read": "auth != null && (auth.uid === $driverId || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (auth.uid === $driverId && data.exists() && newData.exists() && newData.child('email').val() === data.child('email').val() && newData.child('name').val() === data.child('name').val()))",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (auth.uid === $driverId && root.child('users').child(auth.uid).child('isActive').val() !== false && data.exists() && newData.exists() && newData.child('email').val() === data.child('email').val() && newData.child('name').val() === data.child('name').val() && (!data.child('isActive').exists() || newData.child('isActive').val() === data.child('isActive').val())))",
         ".validate": "!newData.exists() || (!newData.child('password').exists() && newData.hasChildren(['name', 'email']) && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 60 && newData.child('email').isString() && newData.child('email').val().length <= 100)"
       }
     },
     "inventory": {
       ".read": "auth != null",
-      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (root.child('users').child(auth.uid).child('role').val() === 'driver' && newData.child('currentStock').val() <= data.child('currentStock').val() && newData.child('pricePerUnit').val() === data.child('pricePerUnit').val()))",
-      ".validate": "newData.child('currentStock').isNumber() && newData.child('currentStock').val() >= 0 && newData.child('pricePerUnit').isNumber() && newData.child('pricePerUnit').val() > 0 && newData.child('pricePerUnit').val() <= 50000"
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (data.exists() && newData.exists() && newData.child('pricePerUnit').val() === data.child('pricePerUnit').val() && newData.child('itemName').val() === data.child('itemName').val() && newData.child('unit').val() === data.child('unit').val() && newData.child('lowStockLimit').val() === data.child('lowStockLimit').val() && newData.child('currentStock').val() >= 0 && newData.child('currentStock').val() <= data.child('currentStock').val() + 1000))",
+      ".validate": "newData.child('currentStock').isNumber() && newData.child('currentStock').val() >= 0 && newData.child('pricePerUnit').isNumber() && newData.child('pricePerUnit').val() > 0 && newData.child('pricePerUnit').val() <= 50000 && newData.child('lowStockLimit').isNumber() && newData.child('lowStockLimit').val() >= 1 && newData.child('lowStockLimit').val() <= 5000 && newData.child('itemName').isString() && newData.child('itemName').val().length >= 2 && newData.child('itemName').val().length <= 80 && newData.child('unit').isString() && newData.child('unit').val().length >= 1 && newData.child('unit').val().length <= 20"
     },
     "inventory_history": {
+      ".indexOn": ["timestamp"],
       ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
       "$logId": {
-        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (root.child('users').child(auth.uid).child('role').val() === 'driver' && !data.exists() && newData.child('type').val() === 'DEDUCTION'))",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (!data.exists() && (newData.child('type').val() === 'ORDER_DEDUCTION' || newData.child('type').val() === 'CANCELLATION_RESTORE')))",
         ".validate": "newData.hasChildren(['type', 'quantity', 'reason', 'newBalance', 'timestamp']) && newData.child('quantity').isNumber() && newData.child('quantity').val() >= 1 && newData.child('newBalance').isNumber() && newData.child('newBalance').val() >= 0 && newData.child('reason').isString() && newData.child('reason').val().length <= 200"
       }
     },
-    "orders": {
-      ".indexOn": ["customerId", "driverId"],
-      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (query.orderByChild === 'customerId' && query.equalTo === auth.uid) || (query.orderByChild === 'driverId' && query.equalTo === auth.uid))",
+    "order_receipts": {
       "$orderId": {
-        ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || data.child('customerId').val() === auth.uid || data.child('driverId').val() === auth.uid)",
-        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (!data.exists() && newData.child('customerId').val() === auth.uid && newData.child('status').val() === 'Pending') || (data.child('driverId').val() === auth.uid && data.child('status').val() !== 'Delivered' && data.child('status').val() !== 'Cancelled' && (newData.child('status').val() === 'Out for Delivery' || newData.child('status').val() === 'Delivered')))",
-        ".validate": "newData.hasChildren(['customerId', 'customerName', 'deliveryAddress', 'sacksOrdered', 'pricePerUnit', 'totalAmount', 'status']) && newData.child('sacksOrdered').isNumber() && newData.child('sacksOrdered').val() >= 1 && newData.child('sacksOrdered').val() <= 1000 && newData.child('totalAmount').isNumber() && newData.child('totalAmount').val() > 0 && newData.child('deliveryAddress').isString() && newData.child('deliveryAddress').val().length >= 5 && newData.child('deliveryAddress').val().length <= 200"
+        ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('orders').child($orderId).child('customerId').val() === auth.uid)",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (!data.exists() && newData.child('customerId').val() === auth.uid))",
+        ".validate": "!newData.exists() || (newData.hasChildren(['customerId', 'imageBase64', 'ocrRefNumber']) && newData.child('imageBase64').isString() && newData.child('imageBase64').val().length >= 50 && newData.child('imageBase64').val().length <= 450000 && newData.child('ocrRefNumber').isString() && newData.child('ocrRefNumber').val().length >= 4 && newData.child('ocrRefNumber').val().length <= 64)"
+      }
+    },
+    "used_receipt_refs": {
+      "$refKey": {
+        ".read": "auth != null",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (!data.exists() && newData.child('customerId').val() === auth.uid) || (data.exists() && !newData.exists() && data.child('customerId').val() === auth.uid))"
+      }
+    },
+    "orders": {
+      ".indexOn": ["customerId", "driverId", "createdAt"],
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (query.orderByChild === 'customerId' && query.equalTo === auth.uid) || (root.child('users').child(auth.uid).child('isActive').val() !== false && query.orderByChild === 'driverId' && query.equalTo === auth.uid))",
+      "$orderId": {
+        ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || data.child('customerId').val() === auth.uid || (data.child('driverId').val() === auth.uid && root.child('users').child(auth.uid).child('isActive').val() !== false))",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (!data.exists() && newData.child('customerId').val() === auth.uid && newData.child('status').val() === 'Pending' && newData.child('pricePerUnit').val() === root.child('inventory/pricePerUnit').val() && (newData.child('paymentMethod').val() === 'COD' || (newData.child('paymentMethod').val() === 'ONLINE_QR' && newData.child('receiptRefNumber').isString() && newData.child('receiptRefNumber').val().length >= 4))) || (data.exists() && newData.exists() && data.child('customerId').val() === auth.uid && data.child('status').val() === 'Pending' && newData.child('status').val() === 'Cancelled' && newData.child('sacksOrdered').val() === data.child('sacksOrdered').val() && newData.child('totalAmount').val() === data.child('totalAmount').val() && newData.child('customerId').val() === data.child('customerId').val()) || (data.exists() && newData.exists() && data.child('driverId').val() === auth.uid && root.child('users').child(auth.uid).child('isActive').val() !== false && ((data.child('status').val() === 'Confirmed' && newData.child('status').val() === 'Out for Delivery') || ((data.child('status').val() === 'Confirmed' || data.child('status').val() === 'Out for Delivery') && newData.child('status').val() === 'Delivered')) && newData.child('customerId').val() === data.child('customerId').val() && newData.child('driverId').val() === data.child('driverId').val() && newData.child('sacksOrdered').val() === data.child('sacksOrdered').val() && newData.child('totalAmount').val() === data.child('totalAmount').val() && newData.child('deliveryAddress').val() === data.child('deliveryAddress').val()))",
+        ".validate": "newData.hasChildren(['customerId', 'customerName', 'deliveryAddress', 'sacksOrdered', 'pricePerUnit', 'totalAmount', 'status']) && newData.child('sacksOrdered').isNumber() && newData.child('sacksOrdered').val() >= 1 && newData.child('sacksOrdered').val() <= 1000 && newData.child('pricePerUnit').isNumber() && newData.child('pricePerUnit').val() > 0 && newData.child('totalAmount').isNumber() && newData.child('totalAmount').val() > 0 && (!newData.child('deliveryFee').exists() || (newData.child('deliveryFee').isNumber() && newData.child('deliveryFee').val() >= 0 && newData.child('totalAmount').val() - (newData.child('sacksOrdered').val() * newData.child('pricePerUnit').val() + newData.child('deliveryFee').val()) <= 1 && (newData.child('sacksOrdered').val() * newData.child('pricePerUnit').val() + newData.child('deliveryFee').val()) - newData.child('totalAmount').val() <= 1)) && newData.child('deliveryAddress').isString() && newData.child('deliveryAddress').val().length >= 5 && newData.child('deliveryAddress').val().length <= 200"
       }
     },
     "driver_locations": {
-      ".read": "auth != null",
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
       "$driverId": {
-        ".write": "auth != null && (auth.uid === $driverId || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        ".validate": "newData.hasChildren(['driverId', 'latitude', 'longitude']) && newData.child('latitude').isNumber() && newData.child('longitude').isNumber()"
+        ".read": "auth != null",
+        ".write": "auth != null && ((auth.uid === $driverId && root.child('users').child(auth.uid).child('isActive').val() !== false) || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".validate": "!newData.exists() || (newData.hasChildren(['driverId', 'latitude', 'longitude']) && newData.child('latitude').isNumber() && newData.child('longitude').isNumber())"
       }
     }
   }

@@ -25,6 +25,76 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
     super.dispose();
   }
 
+  Future<void> _handleForgotPassword() async {
+    final resetCtrl = TextEditingController(text: _emailCtrl.text.trim());
+    String? dialogErr;
+
+    final sentTo = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: AppTheme.cardWhite,
+          title: const Text('Reset Driver Password', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.inkCharcoal)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ilagay ang iyong Driver email para padalhan ng reset link.',
+                style: TextStyle(fontSize: 12, color: AppTheme.mutedSlate),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: resetCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Driver Email Address',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+              ),
+              if (dialogErr != null) ...[
+                const SizedBox(height: 8),
+                Text(dialogErr!, style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedSlate)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final err = Validators.validateEmail(resetCtrl.text);
+                if (err != null) {
+                  setDialogState(() => dialogErr = err);
+                  return;
+                }
+                try {
+                  await _authService.sendPasswordReset(resetCtrl.text);
+                  if (ctx.mounted) Navigator.pop(ctx, resetCtrl.text.trim());
+                } catch (_) {
+                  setDialogState(() => dialogErr = 'Hindi maipadala ang reset email.');
+                }
+              },
+              child: const Text('Send Link'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    resetCtrl.dispose();
+    if (sentTo != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppTheme.emeraldGreen,
+          content: Text('Naipadala ang reset link sa $sentTo.'),
+        ),
+      );
+    }
+  }
+
   Future<void> _handleDriverLogin() async {
     if (_isLoading) return;
 
@@ -42,17 +112,18 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
     });
 
     try {
-      final driverData = await _authService.signInDriver(
+      final driverProfile = await _authService.signInDriver(
         email: _emailCtrl.text.trim(),
         password: _passCtrl.text,
       );
 
       if (mounted) {
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (_) => DriverDashboardScreen(driverInfo: driverData),
+            builder: (_) => DriverDashboardScreen(driverProfile: driverProfile),
           ),
+          (route) => false,
         );
       }
     } catch (e) {
@@ -96,7 +167,6 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Admin-Managed Notice Banner
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -155,7 +225,17 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                   prefixIcon: Icon(Icons.lock_outline),
                 ),
               ),
-              const SizedBox(height: 24),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: _handleForgotPassword,
+                  child: const Text(
+                    'Forgot Password?',
+                    style: TextStyle(color: AppTheme.emeraldGreen, fontWeight: FontWeight.w600, fontSize: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
 
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppTheme.headerForest),

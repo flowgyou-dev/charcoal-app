@@ -5,32 +5,20 @@ import '../../../core/constants/app_constants.dart';
 class InventoryService {
   final FirebaseDatabase _database = FirebaseDatabase.instance;
 
-  Stream<CharcoalInventory> get inventoryStream {
+  Stream<CharcoalInventory?> get inventoryStream {
     return _database.ref(AppConstants.dbInventory).onValue.map((event) {
-      if (event.snapshot.exists) {
+      if (event.snapshot.exists && event.snapshot.value is Map) {
         return CharcoalInventory.fromMap(event.snapshot.value as Map<dynamic, dynamic>);
       }
-      return CharcoalInventory(
-        itemName: 'Standard Charcoal Sack (Uling)',
-        currentStock: 120,
-        pricePerUnit: 250.0,
-        lowStockLimit: 20,
-        unit: 'sack',
-      );
+      return null;
     });
   }
 
-  Future<CharcoalInventory> getInventory() async {
+  Future<CharcoalInventory?> getInventory() async {
     final snap = await _database.ref(AppConstants.dbInventory).get();
-    if (snap.exists) {
+    if (snap.exists && snap.value is Map) {
       return CharcoalInventory.fromMap(snap.value as Map<dynamic, dynamic>);
     }
-    return CharcoalInventory(
-      itemName: 'Standard Charcoal Sack (Uling)',
-      currentStock: 120,
-      pricePerUnit: 250.0,
-      lowStockLimit: 20,
-      unit: 'sack',
-    );
+    return null;
   }
 }

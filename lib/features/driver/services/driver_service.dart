@@ -8,7 +8,7 @@ class DriverService {
   final FirebaseDatabase _database = FirebaseDatabase.instance;
   StreamSubscription<Position>? _positionSubscription;
 
-  // 1. Start Broadcasting GPS Stream to Realtime Database
+  // 1. Start Broadcasting GPS Stream to Realtime Database + configure onDisconnect
   Future<bool> startGpsBroadcast(String driverId, String driverName) async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -24,15 +24,41 @@ class DriverService {
       return false;
     }
 
+    final locRef = _database.ref('${AppConstants.dbDriverLocations}/$driverId');
+    final driverRef = _database.ref('${AppConstants.dbDrivers}/$driverId');
+
+    // Automatically mark offline if connection drops or app is force-killed
+    await locRef.child('isOnline').onDisconnect().set(false);
+    await driverRef.child('isOnline').onDisconnect().set(false);
+
     const locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
-      distanceFilter: 5, // update every 5 meters
+      distanceFilter: 5,
     );
+
+    // Send immediate initial position
+    try {
+      final initial = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      await locRef.set({
+        'driverId': driverId,
+        'driverName': driverName,
+        'latitude': initial.latitude,
+        'longitude': initial.longitude,
+        'heading': initial.heading,
+        'speed': initial.speed,
+        'isOnline': true,
+        'lastUpdated': DateTime.now().toIso8601String(),
+      });
+    } catch (_) {
+      // Wait for stream position if single shot fails
+    }
 
     await _positionSubscription?.cancel();
     _positionSubscription = Geolocator.getPositionStream(locationSettings: locationSettings).listen(
       (Position position) {
-        _database.ref('${AppConstants.dbDriverLocations}/$driverId').set({
+        locRef.set({
           'driverId': driverId,
           'driverName': driverName,
           'latitude': position.latitude,
@@ -43,13 +69,10 @@ class DriverService {
           'lastUpdated': DateTime.now().toIso8601String(),
         });
       },
-      onError: (_) {
-        // Keep stream safe if GPS drops temporarily
-      },
+      onError: (_) {},
     );
 
-    // Mark driver as online in drivers list
-    await _database.ref('${AppConstants.dbDrivers}/$driverId').update({'isOnline': true});
+    await driverRef.update({'isOnline': true});
     return true;
   }
 
@@ -61,7 +84,7 @@ class DriverService {
     await _database.ref('${AppConstants.dbDrivers}/$driverId').update({'isOnline': false});
   }
 
-  // 3. Stream Assigned Orders for this Driver (queried by driverId for RTDB RBAC rules)
+  // 3. Stream Assigned Orders for this Driver
   Stream<List<CharcoalOrder>> streamAssignedOrders(String driverId) {
     return _database
         .ref(AppConstants.dbOrders)
@@ -69,13 +92,14 @@ class DriverService {
         .equalTo(driverId)
         .onValue
         .map((event) {
-      if (!event.snapshot.exists) return [];
+      if (!event.snapshot.exists || event.snapshot.value is! Map) return [];
       final data = event.snapshot.value as Map<dynamic, dynamic>;
       final list = <CharcoalOrder>[];
 
       for (final entry in data.entries) {
-        final orderMap = entry.value as Map<dynamic, dynamic>;
-        list.add(CharcoalOrder.fromMap(entry.key.toString(), orderMap));
+        if (entry.value is Map) {
+          list.add(CharcoalOrder.fromMap(entry.key.toString(), entry.value as Map<dynamic, dynamic>));
+        }
       }
 
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -83,43 +107,33 @@ class DriverService {
     });
   }
 
-  // 4. Mark Order Delivered and Auto-Deduct Inventory Atomically
+  // 4. Transition Confirmed -> Out for Delivery
+  Future<void> startDelivery(CharcoalOrder order) async {
+    if (order.status != 'Confirmed') return;
+    await _database.ref('${AppConstants.dbOrders}/${order.id}').update({
+      'status': 'Out for Delivery',
+      'outForDeliveryAt': DateTime.now().toIso8601String(),
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
+  }
+
+  // 5. Mark Order Delivered & Paid (stock was already atomically reserved upon checkout)
   Future<void> completeOrder(CharcoalOrder order) async {
     if (order.status == 'Delivered' || order.status == 'Cancelled') {
       return;
     }
 
-    // Re-check latest DB state to prevent double completion
     final statusSnap = await _database.ref('${AppConstants.dbOrders}/${order.id}/status').get();
     final latestStatus = statusSnap.value?.toString();
     if (latestStatus == 'Delivered' || latestStatus == 'Cancelled') {
       return;
     }
 
-    // A. Update order status
     await _database.ref('${AppConstants.dbOrders}/${order.id}').update({
       'status': 'Delivered',
+      'paymentStatus': 'Paid',
       'deliveredAt': DateTime.now().toIso8601String(),
-    });
-
-    // B. Deduct stock atomically using RTDB transaction
-    final stockRef = _database.ref('${AppConstants.dbInventory}/currentStock');
-    final txResult = await stockRef.runTransaction((Object? current) {
-      final currentStock = int.tryParse(current?.toString() ?? '0') ?? 0;
-      final nextStock = (currentStock - order.sacksOrdered).clamp(0, 999999);
-      return Transaction.success(nextStock);
-    });
-
-    final newStock = int.tryParse(txResult.snapshot.value?.toString() ?? '0') ?? 0;
-    await _database.ref('${AppConstants.dbInventory}/lastUpdated').set(DateTime.now().toIso8601String());
-
-    // C. Log to inventory_history
-    await _database.ref('inventory_history').push().set({
-      'type': 'DEDUCTION',
-      'quantity': order.sacksOrdered,
-      'reason': 'Delivered to ${order.customerName} (${order.id})',
-      'newBalance': newStock,
-      'timestamp': DateTime.now().toIso8601String(),
+      'updatedAt': DateTime.now().toIso8601String(),
     });
   }
 }

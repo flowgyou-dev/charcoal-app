@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../../order/screens/customer_home_screen.dart';
@@ -63,10 +64,28 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
           (route) => false,
         );
       }
-    } catch (e) {
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        String msg;
+        switch (e.code) {
+          case 'email-already-in-use':
+            msg = 'Ang email address na ito ay rehistrado na. Subukang mag-log in.';
+            break;
+          case 'weak-password':
+            msg = 'Masyadong mahina ang password. Gumamit ng malakas na kombinasyon.';
+            break;
+          case 'invalid-email':
+            msg = 'Hindi valid ang format ng email address.';
+            break;
+          default:
+            msg = e.message ?? 'Hindi makapag-rehistro sa Firebase.';
+        }
+        setState(() => _errorMessage = msg);
+      }
+    } catch (_) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Hindi makapag-rehistro. Subukang gumamit ng ibang email o i-check ang internet.';
+          _errorMessage = 'Hindi makapag-rehistro. Pakitingnan ang iyong internet connection.';
         });
       }
     } finally {

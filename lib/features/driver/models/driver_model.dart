@@ -5,6 +5,8 @@ class DriverProfile {
   final String vehicle;
   final String plateNumber;
   final String email;
+  final bool isOnline;
+  final bool isActive;
 
   DriverProfile({
     required this.driverId,
@@ -13,6 +15,8 @@ class DriverProfile {
     required this.vehicle,
     required this.plateNumber,
     required this.email,
+    this.isOnline = false,
+    this.isActive = true,
   });
 
   factory DriverProfile.fromMap(String id, Map<dynamic, dynamic> map) {
@@ -23,6 +27,8 @@ class DriverProfile {
       vehicle: map['vehicle']?.toString() ?? 'Motorcycle',
       plateNumber: map['plateNumber']?.toString() ?? '',
       email: map['email']?.toString() ?? '',
+      isOnline: map['isOnline'] == true,
+      isActive: map['isActive'] != false,
     );
   }
 }
