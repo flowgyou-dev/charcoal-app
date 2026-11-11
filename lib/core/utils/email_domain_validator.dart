@@ -65,12 +65,11 @@ class EmailDomainValidator {
     '.go.kr', '.gov.br', '.gob.mx', '.gov.za', '.gov.nz',
     // Military
     '.mil', '.mil.ph', '.mil.br',
-    // Organizations & Nonprofits
-    '.org', '.org.ph', '.org.uk', '.org.au', '.org.nz', '.ngo',
-    // Business / Custom Domains
-    '.com', '.com.ph', '.co.uk', '.com.au', '.co.nz', '.co.jp', '.co.kr',
-    '.co.in', '.com.sg', '.com.my', '.com.br', '.co.za', '.net', '.net.ph',
-    '.biz', '.io', '.co', '.tech', '.company',
+    // Organizations & Nonprofits (country-specific; bare .org excluded to prevent catch-alls)
+    '.org.ph', '.org.uk', '.org.au', '.org.nz', '.ngo',
+    // Regional Country Business Domains (bare .com/.net/.io/.co excluded so random/social domains are rejected)
+    '.com.ph', '.co.uk', '.com.au', '.co.nz', '.co.jp', '.co.kr',
+    '.co.in', '.com.sg', '.com.my', '.com.br', '.co.za', '.net.ph',
     // Other Institutional
     '.int', '.health', '.hospital', '.foundation', '.museum',
   ];
@@ -155,6 +154,6 @@ class EmailDomainValidator {
       }
     }
 
-    return 'Email domain "$domain" is not a recognized provider or organization domain.';
+    return 'Email domain "$domain" is not allowed. Use a recognized email provider (e.g. gmail.com, yahoo.com, outlook.com) or an institutional domain (.edu.ph, .gov.ph, .com.ph).';
   }
 }

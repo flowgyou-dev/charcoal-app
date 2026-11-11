@@ -446,14 +446,14 @@ export default function Drivers() {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">Mobile Number</label>
+                  <label className="block font-semibold mb-1">Mobile / Telephone Number</label>
                   <input
                     type="text"
                     required
-                    maxLength={15}
+                    maxLength={20}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="09171234567"
+                    placeholder="09171234567 or (02) 8123-4567"
                     className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-charcoal-header"
                   />
                 </div>
@@ -580,13 +580,14 @@ export default function Drivers() {
                 />
               </div>
               <div>
-                <label className="block font-semibold mb-1">Mobile Number</label>
+                <label className="block font-semibold mb-1">Mobile / Telephone Number</label>
                 <input
                   type="text"
                   required
-                  maxLength={15}
+                  maxLength={20}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  placeholder="09171234567 or (02) 8123-4567"
                   className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5"
                 />
               </div>

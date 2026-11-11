@@ -247,11 +247,13 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
                   const SizedBox(height: 14),
                   TextField(
                     controller: _phoneCtrl,
-                    maxLength: 15,
+                    maxLength: 20,
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [PhPhoneInputFormatter()],
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
-                      labelText: 'Mobile Number (09XXXXXXXXX) *',
+                      labelText: 'Mobile or Telephone Number *',
+                      hintText: 'e.g. 09171234567 or (02) 8123-4567',
                       prefixIcon: Icon(Icons.phone_outlined),
                       counterText: '',
                     ),

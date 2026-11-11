@@ -173,10 +173,18 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
     try {
       await sendPasswordResetEmail(auth, resetEmail.trim().toLowerCase());
       setShowResetModal(false);
-      setNotice(`Password reset link sent to ${resetEmail.trim().toLowerCase()}. Check your inbox or spam folder.`);
+      setNotice(
+        `If an account is registered for ${resetEmail.trim().toLowerCase()}, a password reset link has been sent. Please check your inbox or spam folder.`
+      );
       setResetEmail('');
     } catch (err) {
-      setError(err.message || 'Failed to send password reset email.');
+      if (err?.code === 'auth/user-not-found') {
+        setError('No registered account was found with that email address.');
+      } else if (err?.code === 'auth/too-many-requests') {
+        setError('Too many reset requests. Please wait a bit before trying again.');
+      } else {
+        setError(err.message || 'Failed to send password reset email.');
+      }
     } finally {
       setResetBusy(false);
     }

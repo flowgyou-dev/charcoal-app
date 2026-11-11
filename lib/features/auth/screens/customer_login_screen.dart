@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../widgets/email_verification_dialog.dart';
+import '../widgets/password_reset_dialog.dart';
 import 'customer_register_screen.dart';
 import '../../order/screens/customer_home_screen.dart';
 import '../../../core/theme/app_theme.dart';
@@ -30,76 +31,11 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
   }
 
   Future<void> _handleForgotPassword() async {
-    final resetCtrl = TextEditingController(text: _emailCtrl.text.trim());
-    String? dialogErr;
-
-    final sentTo = await showDialog<String>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: AppTheme.cardWhite,
-          title: const Text(
-            'Reset Password',
-            style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.inkCharcoal),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Enter your registered email address to receive a password reset link.',
-                style: TextStyle(fontSize: 12, color: AppTheme.mutedSlate),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: resetCtrl,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email Address',
-                  prefixIcon: Icon(Icons.email_outlined),
-                ),
-              ),
-              if (dialogErr != null) ...[
-                const SizedBox(height: 8),
-                Text(dialogErr!, style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedSlate)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final err = Validators.validateEmail(resetCtrl.text);
-                if (err != null) {
-                  setDialogState(() => dialogErr = err);
-                  return;
-                }
-                try {
-                  await _authService.sendPasswordReset(resetCtrl.text);
-                  if (ctx.mounted) Navigator.pop(ctx, resetCtrl.text.trim());
-                } catch (_) {
-                  setDialogState(() => dialogErr = 'Unable to send reset link. Please check your email.');
-                }
-              },
-              child: const Text('Send Link'),
-            ),
-          ],
-        ),
-      ),
+    await PasswordResetDialog.show(
+      context,
+      authService: _authService,
+      initialEmail: _emailCtrl.text,
     );
-
-    resetCtrl.dispose();
-    if (sentTo != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppTheme.emeraldGreen,
-          content: Text('Password reset link sent to $sentTo.'),
-        ),
-      );
-    }
   }
 
   Future<void> _handleLogin() async {

@@ -148,10 +148,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 10),
                 TextField(
                   controller: phoneCtrl,
-                  maxLength: 15,
+                  maxLength: 20,
                   keyboardType: TextInputType.phone,
+                  inputFormatters: [PhPhoneInputFormatter()],
                   decoration: const InputDecoration(
-                    labelText: 'Mobile Number (09XXXXXXXXX)',
+                    labelText: 'Mobile or Telephone Number',
+                    hintText: 'e.g. 09171234567 or (02) 8123-4567',
                     prefixIcon: Icon(Icons.phone_outlined),
                     counterText: '',
                   ),

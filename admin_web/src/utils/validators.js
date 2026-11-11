@@ -1,8 +1,20 @@
 import recognizedDomains from '../data/recognized-email-domains.json';
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-const PH_PHONE_REGEX = /^(09\d{9}|\+639\d{9})$/;
+const PH_PHONE_REGEX =
+  /^(09\d{9}|\+639\d{9}|02\d{7,8}|\+632\d{7,8}|0[3-8]\d{8}|\+63[3-8]\d{8}|[78]\d{7})$/;
 const SPECIAL_CHAR_REGEX = /[!@#$%^&*(),.?":{}|<>_\-+=~`]/;
+
+const GENERIC_CATCHALL_SUFFIXES = new Set([
+  '.com',
+  '.net',
+  '.org',
+  '.biz',
+  '.io',
+  '.co',
+  '.tech',
+  '.company',
+]);
 
 const EXACT_PROVIDERS = new Set([
   ...(recognizedDomains.public_email_providers || []).map((d) => d.toLowerCase()),
@@ -12,6 +24,7 @@ const EXACT_PROVIDERS = new Set([
 const ORG_SUFFIXES = Object.values(recognizedDomains.organization_domain_patterns || {})
   .flat()
   .map((pattern) => pattern.replace(/^\*/, '').toLowerCase())
+  .filter((suffix) => !GENERIC_CATCHALL_SUFFIXES.has(suffix))
   .sort((a, b) => b.length - a.length);
 
 const BLOCKED_DOMAINS = new Set([
@@ -86,9 +99,9 @@ export function validateEmail(value) {
 
 export function validatePhPhone(value) {
   const clean = String(value || '').replace(/[\s\-()]/g, '').trim();
-  if (!clean) return 'Mobile number is required.';
+  if (!clean) return 'Mobile or telephone number is required.';
   if (!PH_PHONE_REGEX.test(clean)) {
-    return 'Use a valid PH mobile number (e.g. 09171234567 or +639171234567).';
+    return 'Use a valid PH mobile (e.g. 09171234567) or telephone number (e.g. (02) 8123-4567).';
   }
   return null;
 }

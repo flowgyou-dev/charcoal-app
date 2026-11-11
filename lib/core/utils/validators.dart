@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'email_domain_validator.dart';
 
 class PasswordRequirementStatus {
@@ -33,7 +34,7 @@ class Validators {
   );
 
   static final RegExp _phPhoneRegex = RegExp(
-    r'^(09\d{9}|\+639\d{9})$',
+    r'^(09\d{9}|\+639\d{9}|02\d{7,8}|\+632\d{7,8}|0[3-8]\d{8}|\+63[3-8]\d{8}|[78]\d{7})$',
   );
 
   static final RegExp _htmlTagOrControlRegex = RegExp(r'''[<>"']|[\x00-\x1F\x7F]''');
@@ -98,10 +99,10 @@ class Validators {
   static String? validatePhPhone(String? value) {
     final clean = (value ?? '').replaceAll(RegExp(r'[\s\-()]'), '').trim();
     if (clean.isEmpty) {
-      return 'Please enter your Mobile Number.';
+      return 'Please enter your Mobile or Telephone Number.';
     }
     if (!_phPhoneRegex.hasMatch(clean)) {
-      return 'Use a valid PH mobile number (e.g. 09171234567 or +639171234567).';
+      return 'Use a valid PH mobile (e.g. 09171234567) or telephone number (e.g. (02) 8123-4567).';
     }
     return null;
   }
@@ -193,5 +194,56 @@ class Validators {
       return 'Sorry, only $currentStock sack(s) remaining in stock.';
     }
     return null;
+  }
+}
+
+/// Restricts phone/telephone input to `[0-9+\-\s()]` and caps digit count
+/// by Philippine prefix (`09` -> 11 digits, `02`/area code -> 10, `+63` -> 12, local `7`/`8` -> 8).
+class PhPhoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final cleaned = StringBuffer();
+    for (var i = 0; i < newValue.text.length; i++) {
+      final ch = newValue.text[i];
+      if (RegExp(r'[0-9\-\s()]').hasMatch(ch) || (ch == '+' && cleaned.isEmpty)) {
+        cleaned.write(ch);
+      }
+    }
+    final preFiltered = cleaned.toString();
+    final allDigits = preFiltered.replaceAll(RegExp(r'\D'), '');
+
+    final int maxDigits;
+    if (preFiltered.startsWith('+')) {
+      maxDigits = 12;
+    } else if (allDigits.startsWith('09')) {
+      maxDigits = 11;
+    } else if (allDigits.startsWith('0')) {
+      maxDigits = 10;
+    } else if (allDigits.startsWith('7') || allDigits.startsWith('8')) {
+      maxDigits = 8;
+    } else {
+      maxDigits = 11;
+    }
+
+    final result = StringBuffer();
+    var digitCount = 0;
+    for (var i = 0; i < preFiltered.length; i++) {
+      final ch = preFiltered[i];
+      if (RegExp(r'\d').hasMatch(ch)) {
+        if (digitCount >= maxDigits) continue;
+        digitCount++;
+      }
+      result.write(ch);
+    }
+
+    final finalText = result.toString();
+    final offset = newValue.selection.baseOffset.clamp(0, finalText.length);
+    return TextEditingValue(
+      text: finalText,
+      selection: TextSelection.collapsed(offset: offset),
+    );
   }
 }

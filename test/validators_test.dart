@@ -17,6 +17,8 @@ void main() {
       expect(Validators.validateEmail('person@gmail.con'), isNotNull);
       expect(Validators.validateEmail('user@*.edu.ph'), isNotNull);
       expect(Validators.validateEmail('temp@mailinator.com'), isNotNull);
+      expect(Validators.validateEmail('try@facebook.com'), isNotNull);
+      expect(Validators.validateEmail('user@randomsite.net'), isNotNull);
       expect(Validators.validateEmail('user@charcoal.ph'), isNotNull);
 
       expect(Validators.validateEmail('user@gmail.com'), isNull);
@@ -24,10 +26,11 @@ void main() {
       expect(Validators.validateEmail('contact@company.com.ph'), isNull);
     });
 
-    test('EmailDomainValidator validates public providers and org suffixes directly', () {
+    test('EmailDomainValidator validates public providers and institutional suffixes directly', () {
       expect(EmailDomainValidator.validateDomain('user@outlook.com'), isNull);
       expect(EmailDomainValidator.validateDomain('user@comcast.net'), isNull);
       expect(EmailDomainValidator.validateDomain('user@agency.gov.ph'), isNull);
+      expect(EmailDomainValidator.validateDomain('try@facebook.com'), isNotNull);
       expect(EmailDomainValidator.validateDomain('user@gmil.com'), isNotNull);
       expect(EmailDomainValidator.validateDomain('user@example.invalid'), isNotNull);
     });
@@ -55,10 +58,31 @@ void main() {
       );
     });
 
-    test('validatePhPhone enforces PH mobile format', () {
+    test('validatePhPhone enforces PH mobile and telephone formats', () {
       expect(Validators.validatePhPhone('12345'), isNotNull);
+      expect(Validators.validatePhPhone('099999999999999'), isNotNull);
       expect(Validators.validatePhPhone('0917-123-4567'), isNull);
       expect(Validators.validatePhPhone('+639171234567'), isNull);
+      expect(Validators.validatePhPhone('(02) 8123-4567'), isNull);
+      expect(Validators.validatePhPhone('02-123-4567'), isNull);
+      expect(Validators.validatePhPhone('8123-4567'), isNull);
+      expect(Validators.validatePhPhone('(046) 123-4567'), isNull);
+      expect(Validators.validatePhPhone('+63281234567'), isNull);
+    });
+
+    test('PhPhoneInputFormatter caps digits by PH mobile and landline prefixes', () {
+      final formatter = PhPhoneInputFormatter();
+      final clippedMobile = formatter.formatEditUpdate(
+        TextEditingValue.empty,
+        const TextEditingValue(text: '099999999999999'),
+      );
+      expect(clippedMobile.text, '09999999999');
+
+      final landline = formatter.formatEditUpdate(
+        TextEditingValue.empty,
+        const TextEditingValue(text: '(02) 8123-4567'),
+      );
+      expect(landline.text, '(02) 8123-4567');
     });
 
     test('validateStrongPassword requires length, uppercase, number, and symbol', () {
