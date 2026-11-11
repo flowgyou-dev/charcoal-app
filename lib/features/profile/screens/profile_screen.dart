@@ -30,8 +30,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.cardBg,
-        title: const Text('Privacy Policy', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: AppTheme.cardWhite,
+        title: const Text('Privacy Policy', style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.bold)),
         content: const SingleChildScrollView(
           child: Text(
             'CharCoal Hub Privacy Notice\n\n'
@@ -39,13 +39,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             '2. Location Data: Customer GPS pins are used once per order to locate the drop-off point. Driver GPS coordinates are shared only while GPS tracking is turned ON for active deliveries.\n\n'
             '3. Data Security: Passwords are encrypted and managed by Firebase Authentication. Access is restricted by user role.\n\n'
             '4. Account Deletion: You may permanently delete your account and profile data at any time using the Delete Account button on this screen.',
-            style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.45),
+            style: TextStyle(color: AppTheme.mutedSlate, fontSize: 13, height: 1.45),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close', style: TextStyle(color: AppTheme.primaryAmber)),
+            child: const Text('Close', style: TextStyle(color: AppTheme.headerForest, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -77,20 +77,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: AppTheme.cardBg,
-          title: const Text('Delete Account', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+          backgroundColor: AppTheme.cardWhite,
+          title: Text('Delete Account', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
                 'Sigurado ka bang gusto mong burahin ang iyong account? Hindi na ito maibabalik.',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+                style: TextStyle(color: AppTheme.mutedSlate, fontSize: 13),
               ),
               const SizedBox(height: 14),
               TextField(
                 controller: passCtrl,
                 obscureText: true,
+                style: const TextStyle(color: AppTheme.inkCharcoal),
                 decoration: const InputDecoration(
                   labelText: 'I-type ang Password para i-confirm',
                   prefixIcon: Icon(Icons.lock_outline),
@@ -98,17 +99,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               if (dialogError != null) ...[
                 const SizedBox(height: 8),
-                Text(dialogError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+                Text(dialogError!, style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
               ],
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+              child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedSlate)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
               onPressed: () {
                 final err = Validators.validateLoginPassword(passCtrl.text);
                 if (err != null) {
@@ -149,9 +150,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            backgroundColor: Colors.redAccent,
-            content: Text('Hindi nabura ang account. Pakitingnan kung tama ang password.'),
+          SnackBar(
+            backgroundColor: Colors.red.shade700,
+            content: const Text('Hindi nabura ang account. Pakitingnan kung tama ang password.'),
           ),
         );
       }
@@ -177,10 +178,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 26,
-                        backgroundColor: AppTheme.primaryAmber.withOpacity(0.2),
+                        backgroundColor: AppTheme.headerForest.withValues(alpha: 0.12),
                         child: Text(
                           widget.name.isNotEmpty ? widget.name[0].toUpperCase() : 'U',
-                          style: const TextStyle(color: AppTheme.primaryAmber, fontWeight: FontWeight.bold, fontSize: 20),
+                          style: const TextStyle(color: AppTheme.headerForest, fontWeight: FontWeight.bold, fontSize: 20),
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -188,12 +189,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(widget.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white)),
+                            Text(widget.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppTheme.inkCharcoal)),
                             const SizedBox(height: 2),
-                            Text(widget.email, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                            Text(widget.email, style: const TextStyle(fontSize: 12, color: AppTheme.mutedSlate)),
                             if (widget.phone.isNotEmpty) ...[
                               const SizedBox(height: 2),
-                              Text(widget.phone, style: const TextStyle(fontSize: 12, color: AppTheme.primaryAmber)),
+                              Text(widget.phone, style: const TextStyle(fontSize: 12, color: AppTheme.emeraldGreen, fontWeight: FontWeight.w600)),
                             ],
                           ],
                         ),
@@ -204,9 +205,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppTheme.emeraldGreen.withOpacity(0.15),
+                      color: AppTheme.emeraldGreen.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppTheme.emeraldGreen.withOpacity(0.4)),
+                      border: Border.all(color: AppTheme.emeraldGreen.withValues(alpha: 0.35)),
                     ),
                     child: Text(
                       'Role: ${widget.role.toUpperCase()}',
@@ -222,23 +223,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.privacy_tip_outlined, color: AppTheme.primaryAmber),
-                  title: const Text('Privacy Policy', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Basahin kung paano pinoprotektahan ang iyong data.', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                  trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                  leading: const Icon(Icons.privacy_tip_outlined, color: AppTheme.headerForest),
+                  title: const Text('Privacy Policy', style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Basahin kung paano pinoprotektahan ang iyong data.', style: TextStyle(color: AppTheme.mutedSlate, fontSize: 12)),
+                  trailing: const Icon(Icons.chevron_right, color: AppTheme.mutedSlate),
                   onTap: _showPrivacyPolicy,
                 ),
                 const Divider(height: 1, color: AppTheme.surfaceBorder),
                 ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.white70),
-                  title: const Text('Sign Out', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  leading: const Icon(Icons.logout, color: AppTheme.inkCharcoal),
+                  title: const Text('Sign Out', style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.w600)),
                   onTap: _isProcessing ? null : _handleSignOut,
                 ),
                 const Divider(height: 1, color: AppTheme.surfaceBorder),
                 ListTile(
-                  leading: const Icon(Icons.delete_forever_outlined, color: Colors.redAccent),
-                  title: const Text('Delete Account', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Permanenteng burahin ang iyong account at profile data.', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  leading: Icon(Icons.delete_forever_outlined, color: Colors.red.shade700),
+                  title: Text('Delete Account', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Permanenteng burahin ang iyong account at profile data.', style: TextStyle(color: AppTheme.mutedSlate, fontSize: 12)),
                   onTap: _isProcessing ? null : _handleDeleteAccount,
                 ),
               ],

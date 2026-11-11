@@ -9,9 +9,12 @@ class RoleSelectScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('CharCoal Hub'),
+      ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 28.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -20,26 +23,32 @@ class RoleSelectScreen extends StatelessWidget {
               // Logo & App Name
               Center(
                 child: Container(
-                  width: 90,
-                  height: 90,
+                  width: 88,
+                  height: 88,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryAmber.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: AppTheme.primaryAmber.withOpacity(0.3), width: 2),
+                    color: AppTheme.headerForest,
+                    borderRadius: BorderRadius.circular(26),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.headerForest.withValues(alpha: 0.2),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
                   child: const Center(
-                    child: Text('🔥', style: TextStyle(fontSize: 48)),
+                    child: Icon(Icons.local_fire_department_rounded, size: 46, color: Colors.white),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 22),
               const Text(
                 'CharCoal Express',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: AppTheme.inkCharcoal,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -49,7 +58,7 @@ class RoleSelectScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.white60,
+                  color: AppTheme.mutedSlate,
                 ),
               ),
 
@@ -67,12 +76,12 @@ class RoleSelectScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppTheme.cardBg,
+                    color: AppTheme.cardWhite,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: AppTheme.surfaceBorder),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       )
@@ -84,11 +93,11 @@ class RoleSelectScreen extends StatelessWidget {
                         width: 52,
                         height: 52,
                         decoration: BoxDecoration(
-                          color: Colors.amber.withOpacity(0.15),
+                          color: AppTheme.emeraldGreen.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Center(
-                          child: Text('🪵', style: TextStyle(fontSize: 26)),
+                          child: Icon(Icons.storefront_outlined, color: AppTheme.emeraldGreen, size: 28),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -101,18 +110,18 @@ class RoleSelectScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: AppTheme.inkCharcoal,
                               ),
                             ),
                             SizedBox(height: 4),
                             Text(
                               'Bumili ng sako ng uling at i-track ang delivery.',
-                              style: TextStyle(fontSize: 12, color: Colors.white60),
+                              style: TextStyle(fontSize: 12, color: AppTheme.mutedSlate),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.amber),
+                      const Icon(Icons.arrow_forward_ios, size: 16, color: AppTheme.headerForest),
                     ],
                   ),
                 ),
@@ -132,12 +141,12 @@ class RoleSelectScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppTheme.cardBg,
+                    color: AppTheme.cardWhite,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: AppTheme.surfaceBorder),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       )
@@ -149,11 +158,11 @@ class RoleSelectScreen extends StatelessWidget {
                         width: 52,
                         height: 52,
                         decoration: BoxDecoration(
-                          color: Colors.purple.withOpacity(0.15),
+                          color: AppTheme.headerForest.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Center(
-                          child: Text('🛵', style: TextStyle(fontSize: 26)),
+                          child: Icon(Icons.local_shipping_outlined, color: AppTheme.headerForest, size: 28),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -166,18 +175,18 @@ class RoleSelectScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: AppTheme.inkCharcoal,
                               ),
                             ),
                             SizedBox(height: 4),
                             Text(
                               'Para sa mga rehistradong delivery rider.',
-                              style: TextStyle(fontSize: 12, color: Colors.white60),
+                              style: TextStyle(fontSize: 12, color: AppTheme.mutedSlate),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.purpleAccent),
+                      const Icon(Icons.arrow_forward_ios, size: 16, color: AppTheme.headerForest),
                     ],
                   ),
                 ),

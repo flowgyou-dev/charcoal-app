@@ -1,26 +1,43 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primaryAmber = Color(0xFFD97706); // Amber 600
-  static const Color darkBg = Color(0xFF0F172A); // Slate 900
-  static const Color cardBg = Color(0xFF1E293B); // Slate 800
-  static const Color surfaceBorder = Color(0xFF334155); // Slate 700
-  static const Color emeraldGreen = Color(0xFF10B981); // Emerald 500
+  // Charcoal System Hybrid Color Palette
+  static const Color headerForest = Color(0xFF243D3C);
+  static const Color sidebarTeal = Color(0xFF293E3E);
+  static const Color hoverSlate = Color(0xFF344E4D);
+  static const Color canvasMist = Color(0xFFF3F5F4);
+  static const Color cardWhite = Color(0xFFFFFFFF);
+  static const Color surfaceBorder = Color(0xFFDCE2E0);
+  static const Color inkCharcoal = Color(0xFF1E2929);
+  static const Color mutedSlate = Color(0xFF617070);
+  static const Color emeraldGreen = Color(0xFF3E7C59);
+  static const Color sageWatermark = Color(0xFFD5DDD9);
+  static const Color warningAmber = Color(0xFFB45309);
 
-  static ThemeData get darkTheme {
+  // Semantic aliases for compatibility across feature screens
+  static const Color primaryAmber = headerForest;
+  static const Color darkBg = canvasMist;
+  static const Color cardBg = cardWhite;
+
+  static ThemeData get lightTheme {
     return ThemeData(
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: darkBg,
-      primaryColor: primaryAmber,
-      colorScheme: const ColorScheme.dark(
-        primary: primaryAmber,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: canvasMist,
+      primaryColor: headerForest,
+      colorScheme: const ColorScheme.light(
+        primary: headerForest,
         secondary: emeraldGreen,
-        surface: cardBg,
+        surface: cardWhite,
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
+        onSurface: inkCharcoal,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: darkBg,
+        backgroundColor: headerForest,
+        foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(color: Colors.white),
         titleTextStyle: TextStyle(
           color: Colors.white,
           fontSize: 18,
@@ -28,17 +45,20 @@ class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        color: cardBg,
+        color: cardWhite,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: surfaceBorder),
         ),
-        elevation: 4,
+        elevation: 1.5,
+        shadowColor: Colors.black12,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryAmber,
+          backgroundColor: headerForest,
           foregroundColor: Colors.white,
+          disabledBackgroundColor: sageWatermark,
+          disabledForegroundColor: mutedSlate,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -51,7 +71,8 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF090D16),
+        fillColor: cardWhite,
+        prefixIconColor: mutedSlate,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: surfaceBorder),
@@ -62,10 +83,10 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryAmber, width: 2),
+          borderSide: const BorderSide(color: headerForest, width: 2),
         ),
-        labelStyle: const TextStyle(color: Colors.white70),
-        hintStyle: const TextStyle(color: Colors.white38),
+        labelStyle: const TextStyle(color: mutedSlate),
+        hintStyle: const TextStyle(color: mutedSlate),
       ),
     );
   }

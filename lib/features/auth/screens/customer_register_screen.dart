@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../../order/screens/customer_home_screen.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
 
 class CustomerRegisterScreen extends StatefulWidget {
@@ -85,12 +86,12 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
             children: [
               const Text(
                 'Gumawa ng Bagong Account',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.inkCharcoal),
               ),
               const SizedBox(height: 6),
               const Text(
                 'Mabilisang pag-order ng dekalidad na uling para sa iyong negosyo.',
-                style: TextStyle(fontSize: 13, color: Colors.white60),
+                style: TextStyle(fontSize: 13, color: AppTheme.mutedSlate),
               ),
               const SizedBox(height: 24),
 
@@ -99,13 +100,13 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.15),
+                    color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+                    border: Border.all(color: Colors.red.shade200),
                   ),
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                    style: TextStyle(color: Colors.red.shade800, fontSize: 13),
                   ),
                 ),
 

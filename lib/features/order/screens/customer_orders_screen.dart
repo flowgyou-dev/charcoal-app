@@ -24,7 +24,7 @@ class CustomerOrdersScreen extends StatelessWidget {
               return const Center(
                 child: Text(
                   'Hindi ma-load ang iyong mga order. I-check ang internet.',
-                  style: TextStyle(color: Colors.white60),
+                  style: TextStyle(color: AppTheme.mutedSlate),
                 ),
               );
             }
@@ -35,7 +35,7 @@ class CustomerOrdersScreen extends StatelessWidget {
           final orders = snapshot.data ?? [];
           if (orders.isEmpty) {
             return const Center(
-              child: Text('Wala ka pang uling orders.', style: TextStyle(color: Colors.white60)),
+              child: Text('Wala ka pang uling orders.', style: TextStyle(color: AppTheme.mutedSlate)),
             );
           }
 
@@ -45,24 +45,25 @@ class CustomerOrdersScreen extends StatelessWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final order = orders[index];
+              final isDelivered = order.status == 'Delivered';
               return Card(
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
                   title: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(order.id, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace', color: AppTheme.primaryAmber)),
+                      Text(order.id, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'monospace', color: AppTheme.headerForest)),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: order.status == 'Delivered' ? AppTheme.emeraldGreen.withOpacity(0.15) : AppTheme.primaryAmber.withOpacity(0.15),
+                          color: isDelivered ? AppTheme.emeraldGreen.withValues(alpha: 0.12) : AppTheme.headerForest.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: order.status == 'Delivered' ? AppTheme.emeraldGreen : AppTheme.primaryAmber),
+                          border: Border.all(color: isDelivered ? AppTheme.emeraldGreen : AppTheme.headerForest),
                         ),
                         child: Text(
                           order.status,
                           style: TextStyle(
-                            color: order.status == 'Delivered' ? AppTheme.emeraldGreen : AppTheme.primaryAmber,
+                            color: isDelivered ? AppTheme.emeraldGreen : AppTheme.headerForest,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -74,12 +75,12 @@ class CustomerOrdersScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 8),
-                      Text('${order.sacksOrdered} Sako ng Uling • ₱${order.totalAmount.toStringAsFixed(2)} (COD)', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      Text('${order.sacksOrdered} Sako ng Uling • ₱${order.totalAmount.toStringAsFixed(2)} (COD)', style: const TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
-                      Text(order.deliveryAddress, style: const TextStyle(color: Colors.white60, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(order.deliveryAddress, style: const TextStyle(color: AppTheme.mutedSlate, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
                     ],
                   ),
-                  trailing: const Icon(Icons.chevron_right, color: Colors.white38),
+                  trailing: const Icon(Icons.chevron_right, color: AppTheme.mutedSlate),
                   onTap: () {
                     Navigator.push(
                       context,

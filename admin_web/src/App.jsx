@@ -63,7 +63,7 @@ export default function App() {
 
   if (authChecking) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-300 text-sm">
+      <div className="min-h-screen bg-charcoal-canvas flex items-center justify-center text-charcoal-muted text-sm font-medium">
         Checking Admin session...
       </div>
     );
@@ -111,39 +111,39 @@ export default function App() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans">
+    <div className="flex min-h-screen bg-charcoal-canvas text-charcoal-ink font-sans">
       
       {/* Mobile Drawer Backdrop */}
       {mobileMenuOpen && (
         <div 
           onClick={() => setMobileMenuOpen(false)}
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
         />
       )}
 
-      {/* Sidebar Navigation */}
+      {/* Sidebar Navigation (#293E3E) */}
       <aside className={`
-        fixed lg:static top-0 bottom-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 p-4 flex flex-col justify-between transition-transform duration-200 ease-in-out
+        fixed lg:static top-0 bottom-0 left-0 z-50 w-64 bg-charcoal-sidebar border-r border-charcoal-hover p-4 flex flex-col justify-between transition-transform duration-200 ease-in-out text-white
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div>
           {/* Logo Brand */}
-          <div className="flex items-center justify-between px-3 py-3 mb-6 border-b border-slate-800">
+          <div className="flex items-center justify-between px-3 py-3 mb-6 border-b border-charcoal-hover">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-600/30">
+              <div className="w-10 h-10 rounded-2xl bg-charcoal-eco flex items-center justify-center text-white shadow-md">
                 <Flame className="w-6 h-6" />
               </div>
               <div>
                 <h2 className="font-extrabold text-base tracking-tight text-white">CharCoal Hub</h2>
-                <span className="text-[10px] font-semibold text-emerald-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Vercel Live
+                <span className="text-[11px] font-semibold text-[#B7DFC7] flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-pulse"></span>
+                  Live Sync
                 </span>
               </div>
             </div>
             <button 
               onClick={() => setMobileMenuOpen(false)}
-              className="lg:hidden p-1 text-slate-400 hover:text-white"
+              className="lg:hidden p-1 text-[#CBD5D4] hover:text-white"
             >
               <X className="w-5 h-5" />
             </button>
@@ -164,12 +164,12 @@ export default function App() {
                   className={`
                     w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-left
                     ${isActive 
-                      ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' 
-                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                      ? 'bg-charcoal-hover text-white shadow-sm' 
+                      : 'text-[#CBD5D4] hover:bg-charcoal-hover/70 hover:text-white'
                     }
                   `}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#CBD5D4]'}`} />
                   {item.name}
                 </button>
               );
@@ -178,19 +178,19 @@ export default function App() {
         </div>
 
         {/* Footer Admin Info */}
-        <div className="pt-4 border-t border-slate-800 space-y-3">
+        <div className="pt-4 border-t border-charcoal-hover space-y-3">
           <div className="flex items-center gap-3 px-2 py-1">
-            <div className="w-9 h-9 rounded-xl bg-amber-600/20 border border-amber-600/40 text-amber-400 font-bold text-xs flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-charcoal-hover border border-[#496968] text-white font-bold text-xs flex items-center justify-center shrink-0">
               {adminUser.name.slice(0, 2).toUpperCase()}
             </div>
             <div className="text-xs min-w-0">
               <p className="font-bold text-white truncate">{adminUser.name}</p>
-              <p className="text-[11px] text-slate-400 truncate">{adminUser.email}</p>
+              <p className="text-[11px] text-[#CBD5D4] truncate">{adminUser.email}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-800 hover:bg-rose-600/20 hover:text-rose-300 text-slate-300 text-xs font-semibold transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-charcoal-dark hover:bg-rose-600/80 text-[#CBD5D4] hover:text-white text-xs font-semibold transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" />
             Sign Out
@@ -201,27 +201,27 @@ export default function App() {
       {/* Main Content Pane */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
-        {/* Top Navbar */}
-        <header className="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between">
+        {/* Top Navbar (#243D3C matching Charcoal System top bar) */}
+        <header className="h-16 border-b border-charcoal-hover bg-charcoal-header text-white px-4 sm:px-8 flex items-center justify-between">
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="lg:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+            className="lg:hidden p-2 text-[#CBD5D4] hover:text-white rounded-lg hover:bg-charcoal-hover"
           >
             <Menu className="w-5 h-5" />
           </button>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-slate-400">Admin Portal /</span>
-            <span className="text-xs font-bold text-amber-400 capitalize">{activeTab}</span>
+            <span className="text-xs font-medium text-[#CBD5D4]">CharCoal System /</span>
+            <span className="text-xs font-bold text-white capitalize">{activeTab}</span>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400 hidden sm:inline">Firebase: <strong className="text-emerald-400">charcoal-2fe4b</strong></span>
+            <span className="text-xs text-[#CBD5D4] hidden sm:inline">Firebase: <strong className="text-[#B7DFC7]">charcoal-2fe4b</strong></span>
           </div>
         </header>
 
-        {/* Dynamic Page Content */}
-        <main className="flex-1 p-4 sm:p-8 overflow-y-auto">
+        {/* Dynamic Page Content (#F3F5F4) */}
+        <main className="flex-1 p-4 sm:p-8 overflow-y-auto relative">
           {renderContent()}
         </main>
       </div>

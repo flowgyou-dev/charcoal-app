@@ -73,12 +73,12 @@ export default function Dashboard({ setActiveTab }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Executive Dashboard</h1>
-          <p className="text-sm text-slate-400">Real-time status ng Charcoal Sales, Inventory, at Deliveries.</p>
+          <h1 className="text-2xl font-bold text-charcoal-ink tracking-tight">Executive Dashboard</h1>
+          <p className="text-sm text-charcoal-muted">Real-time status ng Charcoal Sales, Inventory, at Deliveries.</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#E8F3EC] text-charcoal-eco border border-[#B7DFC7]">
+            <span className="w-2 h-2 rounded-full bg-charcoal-eco animate-ping"></span>
             Realtime DB Connected
           </span>
         </div>
@@ -86,19 +86,19 @@ export default function Dashboard({ setActiveTab }) {
 
       {/* Low Stock Warning Banner */}
       {isLowStock && (
-        <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl p-4 flex items-center justify-between text-amber-300">
+        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex items-center justify-between text-amber-900 shadow-sm">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-400" />
+            <AlertTriangle className="w-5 h-5 text-amber-600" />
             <div>
               <p className="font-bold text-sm">Low Stock Alert!</p>
-              <p className="text-xs text-amber-200">
+              <p className="text-xs text-amber-800">
                 May {stock.currentStock} sako na lang ng uling na natitira. Mag-restock na bago maubusan.
               </p>
             </div>
           </div>
           <button 
             onClick={() => setActiveTab('inventory')}
-            className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+            className="px-3.5 py-1.5 bg-charcoal-header hover:bg-charcoal-dark text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
           >
             Go to Restock →
           </button>
@@ -109,74 +109,74 @@ export default function Dashboard({ setActiveTab }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* Card 1: Total Revenue */}
-        <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
+        <div className="bg-white border border-charcoal-border rounded-2xl p-5 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Sales</p>
-              <h3 className="text-2xl font-black text-emerald-400 mt-1 font-mono">
+              <p className="text-xs font-medium text-charcoal-muted uppercase tracking-wider">Total Sales</p>
+              <h3 className="text-2xl font-black text-charcoal-eco mt-1 font-mono">
                 ₱ {totalSales.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </h3>
             </div>
-            <div className="p-3 bg-emerald-500/15 rounded-xl text-emerald-400">
+            <div className="p-3 bg-[#E8F3EC] rounded-xl text-charcoal-eco">
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-400">
+          <div className="mt-3 flex items-center gap-1.5 text-xs text-charcoal-eco font-semibold">
             <ArrowUpRight className="w-3.5 h-3.5" />
             <span>{orders.length} orders recorded</span>
           </div>
         </div>
 
         {/* Card 2: Sacks Sold */}
-        <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
+        <div className="bg-white border border-charcoal-border rounded-2xl p-5 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Sacks Sold</p>
-              <h3 className="text-2xl font-black text-amber-400 mt-1">
-                {totalSacksSold} <span className="text-sm font-semibold text-slate-400">sacks</span>
+              <p className="text-xs font-medium text-charcoal-muted uppercase tracking-wider">Sacks Sold</p>
+              <h3 className="text-2xl font-black text-charcoal-header mt-1">
+                {totalSacksSold} <span className="text-sm font-semibold text-charcoal-muted">sacks</span>
               </h3>
             </div>
-            <div className="p-3 bg-amber-500/15 rounded-xl text-amber-400 text-xl">
+            <div className="p-3 bg-charcoal-canvas border border-charcoal-border rounded-xl text-charcoal-header text-xl">
               🪵
             </div>
           </div>
-          <p className="mt-3 text-xs text-slate-400">
+          <p className="mt-3 text-xs text-charcoal-muted">
             Standard 25kg sacks
           </p>
         </div>
 
         {/* Card 3: Current Stock */}
-        <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
+        <div className="bg-white border border-charcoal-border rounded-2xl p-5 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Available Stock</p>
-              <h3 className={`text-2xl font-black mt-1 ${isLowStock ? 'text-rose-400' : 'text-blue-400'}`}>
-                {stock.currentStock || 0} <span className="text-sm font-semibold text-slate-400">left</span>
+              <p className="text-xs font-medium text-charcoal-muted uppercase tracking-wider">Available Stock</p>
+              <h3 className={`text-2xl font-black mt-1 ${isLowStock ? 'text-rose-600' : 'text-charcoal-header'}`}>
+                {stock.currentStock || 0} <span className="text-sm font-semibold text-charcoal-muted">left</span>
               </h3>
             </div>
-            <div className="p-3 bg-blue-500/15 rounded-xl text-blue-400">
+            <div className="p-3 bg-charcoal-canvas border border-charcoal-border rounded-xl text-charcoal-header">
               <Package className="w-5 h-5" />
             </div>
           </div>
-          <p className="mt-3 text-xs text-slate-400">
+          <p className="mt-3 text-xs text-charcoal-muted">
             Price: ₱{stock.pricePerUnit || 250}/sack
           </p>
         </div>
 
         {/* Card 4: Active Deliveries */}
-        <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
+        <div className="bg-white border border-charcoal-border rounded-2xl p-5 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Active Deliveries</p>
-              <h3 className="text-2xl font-black text-purple-400 mt-1">
-                {activeDeliveries} <span className="text-sm font-semibold text-slate-400">ongoing</span>
+              <p className="text-xs font-medium text-charcoal-muted uppercase tracking-wider">Active Deliveries</p>
+              <h3 className="text-2xl font-black text-teal-700 mt-1">
+                {activeDeliveries} <span className="text-sm font-semibold text-charcoal-muted">ongoing</span>
               </h3>
             </div>
-            <div className="p-3 bg-purple-500/15 rounded-xl text-purple-400">
+            <div className="p-3 bg-teal-50 rounded-xl text-teal-700">
               <Truck className="w-5 h-5" />
             </div>
           </div>
-          <p className="mt-3 text-xs text-slate-400">
+          <p className="mt-3 text-xs text-charcoal-muted">
             {drivers.length} registered drivers
           </p>
         </div>
@@ -184,49 +184,49 @@ export default function Dashboard({ setActiveTab }) {
       </div>
 
       {/* Recent Orders Preview */}
-      <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-base text-white">Recent Orders Stream</h3>
+      <div className="bg-white border border-charcoal-border rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-charcoal-header px-5 py-3.5 flex justify-between items-center">
+          <h3 className="font-bold text-xs uppercase tracking-wider text-white">Recent Orders Stream</h3>
           <button 
             onClick={() => setActiveTab('orders')}
-            className="text-xs text-amber-400 hover:text-amber-300 font-semibold"
+            className="text-xs text-[#B7DFC7] hover:text-white font-semibold"
           >
             View All ({orders.length}) →
           </button>
         </div>
 
         {orders.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 text-sm">
+          <div className="py-12 text-center text-charcoal-muted text-sm">
             Wala pang orders sa database. Maglagay ng order sa Mobile app para makita ito rito live!
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-slate-700 text-slate-400 font-semibold">
-                  <th className="pb-3">Order ID</th>
-                  <th className="pb-3">Customer</th>
-                  <th className="pb-3">Address</th>
-                  <th className="pb-3">Quantity</th>
-                  <th className="pb-3">Total Amount</th>
-                  <th className="pb-3">Status</th>
+                <tr className="bg-[#F8FAFA] border-b border-charcoal-border text-charcoal-muted font-semibold">
+                  <th className="py-3 px-5">Order ID</th>
+                  <th className="py-3 px-5">Customer</th>
+                  <th className="py-3 px-5">Address</th>
+                  <th className="py-3 px-5">Quantity</th>
+                  <th className="py-3 px-5">Total Amount</th>
+                  <th className="py-3 px-5">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/50">
+              <tbody className="divide-y divide-charcoal-border">
                 {orders.slice(0, 5).map(order => (
-                  <tr key={order.id} className="hover:bg-slate-750 transition-colors">
-                    <td className="py-3 font-mono font-bold text-amber-400">{order.id}</td>
-                    <td className="py-3 font-semibold text-white">{order.customerName || 'Customer'}</td>
-                    <td className="py-3 text-slate-300 max-w-[200px] truncate">{order.deliveryAddress || 'Address'}</td>
-                    <td className="py-3 font-medium">{order.sacksOrdered || 1} sacks</td>
-                    <td className="py-3 font-mono font-bold text-emerald-400">₱ {(order.totalAmount || 0).toLocaleString()}</td>
-                    <td className="py-3">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  <tr key={order.id} className="hover:bg-[#F8FAFA] transition-colors">
+                    <td className="py-3.5 px-5 font-mono font-bold text-charcoal-header">{order.id}</td>
+                    <td className="py-3.5 px-5 font-semibold text-charcoal-ink">{order.customerName || 'Customer'}</td>
+                    <td className="py-3.5 px-5 text-charcoal-muted max-w-[200px] truncate">{order.deliveryAddress || 'Address'}</td>
+                    <td className="py-3.5 px-5 font-medium text-charcoal-ink">{order.sacksOrdered || 1} sacks</td>
+                    <td className="py-3.5 px-5 font-mono font-bold text-charcoal-eco">₱ {(order.totalAmount || 0).toLocaleString()}</td>
+                    <td className="py-3.5 px-5">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                         order.status === 'Delivered' 
-                          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                           : order.status === 'Out for Delivery'
-                          ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30'
-                          : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                          ? 'bg-teal-100 text-teal-800 border border-teal-200'
+                          : 'bg-amber-100 text-amber-800 border border-amber-200'
                       }`}>
                         {order.status || 'Pending'}
                       </span>

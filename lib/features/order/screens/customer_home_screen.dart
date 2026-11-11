@@ -136,7 +136,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         title: const Text('Bumili ng Uling'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.receipt_long, color: AppTheme.primaryAmber),
+            icon: const Icon(Icons.receipt_long, color: Colors.white),
             tooltip: 'My Orders',
             onPressed: () {
               Navigator.push(
@@ -148,7 +148,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.account_circle_outlined, color: Colors.white70),
+            icon: const Icon(Icons.account_circle_outlined, color: Colors.white),
             tooltip: 'Account & Settings',
             onPressed: () {
               Navigator.push(
@@ -177,7 +177,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   child: Text(
                     'Hindi ma-load ang stock mula sa server. Paki-check ang internet connection.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white70),
+                    style: TextStyle(color: AppTheme.mutedSlate),
                   ),
                 ),
               );
@@ -197,19 +197,19 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Top Banner
+                // Top Banner (Forest Charcoal + Eco Green gradient)
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFD97706), Color(0xFF92400E)],
+                      colors: [AppTheme.headerForest, AppTheme.emeraldGreen],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.amber.withOpacity(0.2),
+                        color: AppTheme.headerForest.withValues(alpha: 0.18),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       )
@@ -253,8 +253,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                               width: 56,
                               height: 56,
                               decoration: BoxDecoration(
-                                color: Colors.amber.withOpacity(0.15),
+                                color: AppTheme.canvasMist,
                                 borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppTheme.surfaceBorder),
                               ),
                               child: const Center(
                                 child: Text('🪵', style: TextStyle(fontSize: 28)),
@@ -267,7 +268,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                 children: [
                                   Text(
                                     inv.itemName,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white),
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.inkCharcoal),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -278,7 +279,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                   Text(
                                     'Available Stock: ${inv.currentStock} sako',
                                     style: TextStyle(
-                                      color: inv.currentStock <= inv.lowStockLimit ? Colors.redAccent : Colors.lightBlueAccent,
+                                      color: inv.currentStock <= inv.lowStockLimit ? Colors.red.shade700 : AppTheme.headerForest,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -294,26 +295,26 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           children: [
                             const Text(
                               'Dami ng Sako:',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.inkCharcoal),
                             ),
                             Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFF090D16),
+                                color: AppTheme.canvasMist,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: AppTheme.surfaceBorder),
                               ),
                               child: Row(
                                 children: [
                                   IconButton(
-                                    icon: const Icon(Icons.remove, size: 18),
+                                    icon: const Icon(Icons.remove, size: 18, color: AppTheme.inkCharcoal),
                                     onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null,
                                   ),
                                   Text(
                                     '$_quantity',
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryAmber),
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.headerForest),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.add, size: 18),
+                                    icon: const Icon(Icons.add, size: 18, color: AppTheme.inkCharcoal),
                                     onPressed: _quantity < inv.currentStock ? () => setState(() => _quantity++) : null,
                                   ),
                                 ],
@@ -340,25 +341,25 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           children: [
                             const Row(
                               children: [
-                                Icon(Icons.location_on, color: Colors.redAccent, size: 20),
+                                Icon(Icons.location_on, color: AppTheme.headerForest, size: 20),
                                 SizedBox(width: 6),
                                 Text(
                                   'Delivery Location Pin',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.inkCharcoal),
                                 ),
                               ],
                             ),
                             TextButton.icon(
                               onPressed: _getCurrentLocation,
-                              icon: const Icon(Icons.my_location, size: 16, color: AppTheme.primaryAmber),
-                              label: const Text('My GPS', style: TextStyle(fontSize: 12, color: AppTheme.primaryAmber)),
+                              icon: const Icon(Icons.my_location, size: 16, color: AppTheme.emeraldGreen),
+                              label: const Text('My GPS', style: TextStyle(fontSize: 12, color: AppTheme.emeraldGreen, fontWeight: FontWeight.bold)),
                             ),
                           ],
                         ),
                         const SizedBox(height: 6),
                         const Text(
                           'I-tap ang iyong lokasyon sa Leaflet map para malaman ng driver kung saan dadalhin.',
-                          style: TextStyle(fontSize: 11, color: Colors.white60),
+                          style: TextStyle(fontSize: 11, color: AppTheme.mutedSlate),
                         ),
                         const SizedBox(height: 12),
 
@@ -427,7 +428,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppTheme.emeraldGreen.withOpacity(0.15),
+                            color: AppTheme.emeraldGreen.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Text('💵', style: TextStyle(fontSize: 22)),
@@ -439,12 +440,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                             children: [
                               Text(
                                 'Cash on Delivery (COD)',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.inkCharcoal),
                               ),
                               SizedBox(height: 2),
                               Text(
                                 'Magbayad sa driver pagka-deliver ng sako ng uling.',
-                                style: TextStyle(fontSize: 11, color: Colors.white60),
+                                style: TextStyle(fontSize: 11, color: AppTheme.mutedSlate),
                               ),
                             ],
                           ),

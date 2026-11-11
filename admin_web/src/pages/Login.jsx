@@ -135,14 +135,14 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 text-slate-100">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-7 shadow-2xl">
+    <div className="min-h-screen bg-charcoal-canvas flex items-center justify-center p-4 text-charcoal-ink">
+      <div className="w-full max-w-md bg-white border border-charcoal-border rounded-3xl p-7 shadow-lg">
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-600/30 mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-charcoal-header flex items-center justify-center text-white shadow-md mb-4">
             <Flame className="w-8 h-8" />
           </div>
-          <h1 className="text-xl font-extrabold text-white tracking-tight">CharCoal Hub Admin</h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <h1 className="text-xl font-extrabold text-charcoal-ink tracking-tight">CharCoal Hub Admin</h1>
+          <p className="text-xs text-charcoal-muted mt-1">
             {isSetupMode
               ? 'Create the first Business Owner / Admin account'
               : 'Sign in with your verified Admin credentials'}
@@ -150,8 +150,8 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
         </div>
 
         {error && (
-          <div className="mb-5 p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-start gap-2.5 text-xs text-rose-300">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+          <div className="mb-5 p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2.5 text-xs text-rose-700">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
@@ -159,9 +159,9 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           {isSetupMode && (
             <div>
-              <label className="block text-slate-300 font-semibold mb-1.5">Admin Full Name</label>
+              <label className="block text-charcoal-ink font-semibold mb-1.5">Admin Full Name</label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                <User className="w-4 h-4 text-charcoal-muted absolute left-3.5 top-3" />
                 <input
                   type="text"
                   maxLength={60}
@@ -169,16 +169,16 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Business Owner"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-3.5 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl pl-10 pr-3.5 py-2.5 text-charcoal-ink focus:outline-none focus:border-charcoal-header"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-slate-300 font-semibold mb-1.5">Admin Email</label>
+            <label className="block text-charcoal-ink font-semibold mb-1.5">Admin Email</label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+              <Mail className="w-4 h-4 text-charcoal-muted absolute left-3.5 top-3" />
               <input
                 type="email"
                 maxLength={100}
@@ -186,15 +186,15 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@charcoal.ph"
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-3.5 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl pl-10 pr-3.5 py-2.5 text-charcoal-ink focus:outline-none focus:border-charcoal-header"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-slate-300 font-semibold mb-1.5">Password</label>
+            <label className="block text-charcoal-ink font-semibold mb-1.5">Password</label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+              <Lock className="w-4 h-4 text-charcoal-muted absolute left-3.5 top-3" />
               <input
                 type="password"
                 maxLength={64}
@@ -202,7 +202,7 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={isSetupMode ? 'Min 8 chars, uppercase, number, symbol' : 'Enter password'}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-3.5 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl pl-10 pr-3.5 py-2.5 text-charcoal-ink focus:outline-none focus:border-charcoal-header"
               />
             </div>
           </div>
@@ -210,7 +210,7 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white font-bold shadow-lg shadow-amber-600/20 transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-charcoal-header hover:bg-charcoal-dark disabled:opacity-60 text-white font-bold shadow-sm transition-all flex items-center justify-center gap-2 uppercase tracking-wide"
           >
             <ShieldCheck className="w-4 h-4" />
             {isSubmitting
@@ -222,14 +222,14 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
         </form>
 
         {canInitializeAdmin && (
-          <div className="mt-5 pt-4 border-t border-slate-800 text-center">
+          <div className="mt-5 pt-4 border-t border-charcoal-border text-center">
             <button
               type="button"
               onClick={() => {
                 setError('');
                 setIsSetupMode(!isSetupMode);
               }}
-              className="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-amber-400 hover:text-amber-300 font-semibold transition-colors"
+              className="w-full py-2 px-3 rounded-xl bg-charcoal-canvas hover:bg-charcoal-sage/50 border border-charcoal-border text-xs text-charcoal-header font-semibold transition-colors"
             >
               {isSetupMode ? 'Back to Admin Sign In' : 'First time here? Create Super Admin Account'}
             </button>

@@ -62,7 +62,10 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
               // Order Summary & Status Stepper
               Container(
                 padding: const EdgeInsets.all(16),
-                color: AppTheme.cardBg,
+                decoration: const BoxDecoration(
+                  color: AppTheme.cardWhite,
+                  border: Border(bottom: BorderSide(color: AppTheme.surfaceBorder)),
+                ),
                 child: Column(
                   children: [
                     Row(
@@ -73,11 +76,11 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                           children: [
                             Text(
                               currentOrder.id,
-                              style: const TextStyle(fontFamily: 'monospace', color: AppTheme.primaryAmber, fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontFamily: 'monospace', color: AppTheme.headerForest, fontWeight: FontWeight.bold),
                             ),
                             Text(
                               '${currentOrder.sacksOrdered} Sako • ₱${currentOrder.totalAmount.toStringAsFixed(2)} (COD)',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.inkCharcoal),
                             ),
                           ],
                         ),
@@ -85,17 +88,17 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: currentOrder.status == 'Delivered'
-                                ? AppTheme.emeraldGreen.withOpacity(0.15)
-                                : AppTheme.primaryAmber.withOpacity(0.15),
+                                ? AppTheme.emeraldGreen.withValues(alpha: 0.12)
+                                : AppTheme.headerForest.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: currentOrder.status == 'Delivered' ? AppTheme.emeraldGreen : AppTheme.primaryAmber,
+                              color: currentOrder.status == 'Delivered' ? AppTheme.emeraldGreen : AppTheme.headerForest,
                             ),
                           ),
                           child: Text(
                             currentOrder.status,
                             style: TextStyle(
-                              color: currentOrder.status == 'Delivered' ? AppTheme.emeraldGreen : AppTheme.primaryAmber,
+                              color: currentOrder.status == 'Delivered' ? AppTheme.emeraldGreen : AppTheme.headerForest,
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
@@ -194,11 +197,14 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
               // Driver Contact / Live Info Bar
               Container(
                 padding: const EdgeInsets.all(16),
-                color: AppTheme.darkBg,
+                decoration: const BoxDecoration(
+                  color: AppTheme.cardWhite,
+                  border: Border(top: BorderSide(color: AppTheme.surfaceBorder)),
+                ),
                 child: Row(
                   children: [
                     CircleAvatar(
-                      backgroundColor: Colors.purple.shade700,
+                      backgroundColor: AppTheme.headerForest,
                       child: const Text('🛵', style: TextStyle(fontSize: 18)),
                     ),
                     const SizedBox(width: 14),
@@ -208,14 +214,14 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                         children: [
                           Text(
                             currentOrder.driverName ?? 'Waiting for driver assignment...',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.inkCharcoal),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             currentOrder.status == 'Out for Delivery'
                                 ? 'Papunta na si Kuya Driver sa lokasyon mo.'
                                 : 'Ihahanda na ang iyong sako ng uling.',
-                            style: const TextStyle(fontSize: 11, color: Colors.white60),
+                            style: const TextStyle(fontSize: 11, color: AppTheme.mutedSlate),
                           ),
                         ],
                       ),
@@ -238,19 +244,19 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
           width: 24,
           height: 24,
           decoration: BoxDecoration(
-            color: isDone ? AppTheme.primaryAmber : AppTheme.surfaceBorder,
+            color: isDone ? AppTheme.emeraldGreen : AppTheme.sageWatermark,
             shape: BoxShape.circle,
           ),
           child: Center(
             child: isDone
                 ? const Icon(Icons.check, size: 14, color: Colors.white)
-                : Text('$index', style: const TextStyle(fontSize: 10, color: Colors.white70)),
+                : Text('$index', style: const TextStyle(fontSize: 10, color: AppTheme.inkCharcoal)),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(fontSize: 10, color: isDone ? Colors.white : Colors.white38),
+          style: TextStyle(fontSize: 10, color: isDone ? AppTheme.inkCharcoal : AppTheme.mutedSlate, fontWeight: isDone ? FontWeight.w600 : FontWeight.normal),
         ),
       ],
     );
@@ -260,7 +266,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
     return Expanded(
       child: Container(
         height: 2,
-        color: isDone ? AppTheme.primaryAmber : AppTheme.surfaceBorder,
+        color: isDone ? AppTheme.emeraldGreen : AppTheme.surfaceBorder,
       ),
     );
   }

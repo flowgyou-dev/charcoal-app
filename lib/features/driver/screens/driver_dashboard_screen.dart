@@ -69,16 +69,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.cardBg,
-        title: const Text('Confirm Delivery & Payment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: AppTheme.cardWhite,
+        title: const Text('Confirm Delivery & Payment', style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.bold)),
         content: Text(
           'I-mark as Delivered ang Order ${order.id}?\n\nKolektahin ang ₱${order.totalAmount.toStringAsFixed(2)} mula kay ${order.customerName}.',
-          style: const TextStyle(color: Colors.white70),
+          style: const TextStyle(color: AppTheme.mutedSlate),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedSlate)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.emeraldGreen),
@@ -132,18 +132,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: _isGpsOn ? AppTheme.emeraldGreen : Colors.white38,
+                  color: _isGpsOn ? const Color(0xFFB7DFC7) : Colors.white60,
                 ),
               ),
               Switch(
                 value: _isGpsOn,
-                activeColor: AppTheme.emeraldGreen,
+                activeThumbColor: const Color(0xFF4ADE80),
                 onChanged: _toggleGps,
               ),
             ],
           ),
           IconButton(
-            icon: const Icon(Icons.account_circle_outlined, color: Colors.white70),
+            icon: const Icon(Icons.account_circle_outlined, color: Colors.white),
             tooltip: 'Account & Settings',
             onPressed: () {
               Navigator.push(
@@ -167,13 +167,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           // Driver Status Banner
           Container(
             padding: const EdgeInsets.all(16),
-            color: AppTheme.cardBg,
+            decoration: const BoxDecoration(
+              color: AppTheme.cardWhite,
+              border: Border(bottom: BorderSide(color: AppTheme.surfaceBorder)),
+            ),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: AppTheme.primaryAmber.withOpacity(0.2),
-                  child: const Text('🛵', style: TextStyle(fontSize: 24)),
+                  backgroundColor: AppTheme.headerForest.withValues(alpha: 0.1),
+                  child: const Icon(Icons.local_shipping_outlined, color: AppTheme.headerForest, size: 24),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -182,12 +185,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     children: [
                       Text(
                         _driverName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.inkCharcoal),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '$_vehicle • Plate: ${_plate.isEmpty ? "N/A" : _plate}',
-                        style: const TextStyle(color: Colors.white60, fontSize: 12),
+                        style: const TextStyle(color: AppTheme.mutedSlate, fontSize: 12),
                       ),
                     ],
                   ),
@@ -195,14 +198,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _isGpsOn ? AppTheme.emeraldGreen.withOpacity(0.15) : Colors.white10,
+                    color: _isGpsOn ? AppTheme.emeraldGreen.withValues(alpha: 0.12) : AppTheme.canvasMist,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _isGpsOn ? AppTheme.emeraldGreen : Colors.white24),
+                    border: Border.all(color: _isGpsOn ? AppTheme.emeraldGreen : AppTheme.surfaceBorder),
                   ),
                   child: Text(
                     _isGpsOn ? 'Online' : 'Standby',
                     style: TextStyle(
-                      color: _isGpsOn ? AppTheme.emeraldGreen : Colors.white60,
+                      color: _isGpsOn ? AppTheme.emeraldGreen : AppTheme.mutedSlate,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
@@ -235,13 +238,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                           Text(
                             'Walang naka-assign na delivery sa iyo ngayon.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 15),
+                            style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.bold, fontSize: 15),
                           ),
                           SizedBox(height: 6),
                           Text(
                             'Maghintay na mag-assign ang Admin ng customer order mula sa Admin Web Dashboard.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white38, fontSize: 12),
+                            style: TextStyle(color: AppTheme.mutedSlate, fontSize: 12),
                           ),
                         ],
                       ),
@@ -272,20 +275,20 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                                     fontFamily: 'monospace',
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
-                                    color: AppTheme.primaryAmber,
+                                    color: AppTheme.headerForest,
                                   ),
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: isDelivered ? AppTheme.emeraldGreen.withOpacity(0.15) : Colors.purple.withOpacity(0.15),
+                                    color: isDelivered ? AppTheme.emeraldGreen.withValues(alpha: 0.12) : AppTheme.headerForest.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: isDelivered ? AppTheme.emeraldGreen : Colors.purpleAccent),
+                                    border: Border.all(color: isDelivered ? AppTheme.emeraldGreen : AppTheme.headerForest),
                                   ),
                                   child: Text(
                                     order.status,
                                     style: TextStyle(
-                                      color: isDelivered ? AppTheme.emeraldGreen : Colors.purpleAccent,
+                                      color: isDelivered ? AppTheme.emeraldGreen : AppTheme.headerForest,
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -296,18 +299,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                             const SizedBox(height: 10),
                             Text(
                               order.customerName,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.inkCharcoal),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               '📍 ${order.deliveryAddress}',
-                              style: const TextStyle(color: Colors.white70, fontSize: 13),
+                              style: const TextStyle(color: AppTheme.mutedSlate, fontSize: 13),
                             ),
                             if (order.customerPhone.isNotEmpty) ...[
                               const SizedBox(height: 2),
                               Text(
                                 '📞 ${order.customerPhone}',
-                                style: const TextStyle(color: AppTheme.primaryAmber, fontSize: 12, fontWeight: FontWeight.bold),
+                                style: const TextStyle(color: AppTheme.headerForest, fontSize: 12, fontWeight: FontWeight.bold),
                               ),
                             ],
                             const Divider(height: 24, color: AppTheme.surfaceBorder),
@@ -317,14 +320,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('Kargang Uling:', style: TextStyle(color: Colors.white54, fontSize: 11)),
-                                    Text('${order.sacksOrdered} Sako', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
+                                    const Text('Kargang Uling:', style: TextStyle(color: AppTheme.mutedSlate, fontSize: 11)),
+                                    Text('${order.sacksOrdered} Sako', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.inkCharcoal, fontSize: 14)),
                                   ],
                                 ),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    const Text('Sisingilin (COD):', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                                    const Text('Sisingilin (COD):', style: TextStyle(color: AppTheme.mutedSlate, fontSize: 11)),
                                     Text(
                                       '₱ ${order.totalAmount.toStringAsFixed(2)}',
                                       style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.emeraldGreen, fontSize: 16, fontFamily: 'monospace'),

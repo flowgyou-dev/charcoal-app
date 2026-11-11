@@ -99,27 +99,27 @@ export default function Orders() {
   return (
     <div className="space-y-6">
       {actionError && (
-        <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300">
+        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700">
           {actionError}
         </div>
       )}
       {/* Header & Filter Pills */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Customer Orders & Dispatch</h1>
-          <p className="text-sm text-slate-400">Pagtanggap ng orders, pag-assign ng delivery driver, at tracking.</p>
+          <h1 className="text-2xl font-bold text-charcoal-ink tracking-tight">Customer Orders &amp; Dispatch</h1>
+          <p className="text-sm text-charcoal-muted">Pagtanggap ng orders, pag-assign ng delivery driver, at tracking.</p>
         </div>
 
         {/* Filter Buttons */}
-        <div className="flex flex-wrap gap-1.5 bg-slate-800 p-1.5 rounded-xl border border-slate-700">
+        <div className="flex flex-wrap gap-1.5 bg-white p-1.5 rounded-xl border border-charcoal-border shadow-sm">
           {['ALL', 'PENDING', 'CONFIRMED', 'OUT FOR DELIVERY', 'DELIVERED'].map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 filter === f
-                  ? 'bg-amber-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-charcoal-header text-white shadow-sm'
+                  : 'text-charcoal-muted hover:text-charcoal-ink hover:bg-charcoal-canvas'
               }`}
             >
               {f === 'ALL' ? 'All Orders' : f}
@@ -129,51 +129,51 @@ export default function Orders() {
       </div>
 
       {/* Orders List */}
-      <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-white border border-charcoal-border rounded-2xl shadow-sm overflow-hidden">
         {filteredOrders.length === 0 ? (
-          <div className="py-16 text-center text-slate-400 text-sm">
+          <div className="py-16 text-center text-charcoal-muted text-sm">
             Walang orders sa filter na ito.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs min-w-[800px]">
-              <thead className="bg-slate-900/60 border-b border-slate-700 text-slate-400 font-semibold">
+              <thead className="bg-charcoal-header text-white font-semibold uppercase tracking-wider">
                 <tr>
-                  <th className="p-4">Order ID & Date</th>
+                  <th className="p-4">Order ID &amp; Date</th>
                   <th className="p-4">Customer Details</th>
                   <th className="p-4">Delivery Pin</th>
-                  <th className="p-4">Sacks & Total</th>
+                  <th className="p-4">Sacks &amp; Total</th>
                   <th className="p-4">Assigned Driver</th>
                   <th className="p-4">Status</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/50">
+              <tbody className="divide-y divide-charcoal-border">
                 {filteredOrders.map(order => (
-                  <tr key={order.id} className="hover:bg-slate-750 transition-colors">
+                  <tr key={order.id} className="hover:bg-[#F8FAFA] transition-colors">
                     
                     {/* ID & Date */}
                     <td className="p-4">
-                      <span className="font-mono font-bold text-amber-400 text-sm">{order.id}</span>
-                      <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
+                      <span className="font-mono font-bold text-charcoal-header text-sm">{order.id}</span>
+                      <p className="text-[11px] text-charcoal-muted mt-0.5 font-mono">
                         {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Today'}
                       </p>
                     </td>
 
                     {/* Customer */}
                     <td className="p-4">
-                      <p className="font-bold text-white text-sm">{order.customerName || 'Anonymous Customer'}</p>
-                      <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
-                        <Phone className="w-3 h-3 text-slate-500" />
+                      <p className="font-bold text-charcoal-ink text-sm">{order.customerName || 'Anonymous Customer'}</p>
+                      <p className="text-[11px] text-charcoal-muted flex items-center gap-1 mt-0.5">
+                        <Phone className="w-3 h-3 text-charcoal-muted" />
                         {order.customerPhone || 'No Phone'}
                       </p>
                     </td>
 
                     {/* Address & GPS Pin */}
                     <td className="p-4 max-w-[220px]">
-                      <p className="text-slate-300 font-medium truncate">{order.deliveryAddress || 'Address'}</p>
+                      <p className="text-charcoal-ink font-medium truncate">{order.deliveryAddress || 'Address'}</p>
                       {order.deliveryLat && (
-                        <p className="text-[10px] text-blue-400 flex items-center gap-1 mt-0.5 font-mono">
+                        <p className="text-[11px] text-charcoal-eco flex items-center gap-1 mt-0.5 font-mono">
                           <MapPin className="w-3 h-3" />
                           {Number(order.deliveryLat).toFixed(4)}, {Number(order.deliveryLng).toFixed(4)}
                         </p>
@@ -182,8 +182,8 @@ export default function Orders() {
 
                     {/* Sacks & Amount */}
                     <td className="p-4">
-                      <p className="font-bold text-white text-sm">{order.sacksOrdered || 1} Sacks</p>
-                      <p className="text-emerald-400 font-mono font-bold text-xs mt-0.5">
+                      <p className="font-bold text-charcoal-ink text-sm">{order.sacksOrdered || 1} Sacks</p>
+                      <p className="text-charcoal-eco font-mono font-bold text-xs mt-0.5">
                         ₱ {(order.totalAmount || 0).toLocaleString()} (COD)
                       </p>
                     </td>
@@ -194,7 +194,7 @@ export default function Orders() {
                         disabled={updatingOrderId === order.id || order.status === 'Delivered' || order.status === 'Cancelled'}
                         value={order.driverId || ''}
                         onChange={e => handleAssignDriver(order.id, e.target.value)}
-                        className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-amber-500 disabled:opacity-50"
+                        className="bg-charcoal-canvas border border-charcoal-border rounded-lg px-2.5 py-1.5 text-xs text-charcoal-ink font-medium focus:outline-none focus:border-charcoal-header disabled:opacity-50"
                       >
                         <option value="">-- Assign Driver --</option>
                         {drivers.map(d => (
@@ -207,16 +207,16 @@ export default function Orders() {
 
                     {/* Status Badge */}
                     <td className="p-4">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                      <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
                         order.status === 'Delivered'
-                          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                           : order.status === 'Out for Delivery'
-                          ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30'
+                          ? 'bg-teal-100 text-teal-800 border border-teal-200'
                           : order.status === 'Confirmed'
-                          ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+                          ? 'bg-blue-100 text-blue-800 border border-blue-200'
                           : order.status === 'Cancelled'
-                          ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
-                          : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                          ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                          : 'bg-amber-100 text-amber-800 border border-amber-200'
                       }`}>
                         {order.status || 'Pending'}
                       </span>
@@ -228,7 +228,7 @@ export default function Orders() {
                         <button
                           disabled={updatingOrderId === order.id}
                           onClick={() => handleUpdateStatus(order.id, 'Out for Delivery')}
-                          className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-sm"
+                          className="px-2.5 py-1 bg-charcoal-header hover:bg-charcoal-dark disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-sm"
                         >
                           Dispatch
                         </button>
@@ -237,7 +237,7 @@ export default function Orders() {
                         <button
                           disabled={updatingOrderId === order.id}
                           onClick={() => handleUpdateStatus(order.id, 'Delivered')}
-                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-sm"
+                          className="px-2.5 py-1 bg-charcoal-eco hover:bg-[#2F6346] disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-sm"
                         >
                           Complete
                         </button>
@@ -246,7 +246,7 @@ export default function Orders() {
                         <button
                           disabled={updatingOrderId === order.id}
                           onClick={() => handleUpdateStatus(order.id, 'Cancelled')}
-                          className="px-2.5 py-1 bg-slate-700 hover:bg-rose-600 disabled:opacity-50 text-slate-300 hover:text-white rounded-lg text-xs font-medium"
+                          className="px-2.5 py-1 bg-charcoal-canvas hover:bg-rose-600 disabled:opacity-50 border border-charcoal-border text-charcoal-ink hover:text-white rounded-lg text-xs font-medium"
                         >
                           Cancel
                         </button>

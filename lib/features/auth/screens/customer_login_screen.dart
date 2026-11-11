@@ -83,20 +83,28 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 16),
-              const Center(
-                child: Text('🪵', style: TextStyle(fontSize: 48)),
+              Center(
+                child: Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: AppTheme.headerForest.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(Icons.local_fire_department_rounded, size: 38, color: AppTheme.headerForest),
+                ),
               ),
               const SizedBox(height: 16),
               const Text(
                 'Maligayang Pagbabalik!',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.inkCharcoal),
               ),
               const SizedBox(height: 6),
               const Text(
                 'Mag-log in para makabili ng uling at i-track ang delivery.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: Colors.white60),
+                style: TextStyle(fontSize: 13, color: AppTheme.mutedSlate),
               ),
               const SizedBox(height: 32),
 
@@ -105,19 +113,20 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.15),
+                    color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+                    border: Border.all(color: Colors.red.shade200),
                   ),
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                    style: TextStyle(color: Colors.red.shade800, fontSize: 13),
                   ),
                 ),
 
               TextField(
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: AppTheme.inkCharcoal),
                 decoration: const InputDecoration(
                   labelText: 'Email Address',
                   prefixIcon: Icon(Icons.email_outlined),
@@ -127,6 +136,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
               TextField(
                 controller: _passCtrl,
                 obscureText: true,
+                style: const TextStyle(color: AppTheme.inkCharcoal),
                 decoration: const InputDecoration(
                   labelText: 'Password',
                   prefixIcon: Icon(Icons.lock_outline),
@@ -150,7 +160,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Wala ka pang account? ', style: TextStyle(color: Colors.white60, fontSize: 13)),
+                  const Text('Wala ka pang account? ', style: TextStyle(color: AppTheme.mutedSlate, fontSize: 13)),
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -160,7 +170,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                     },
                     child: const Text(
                       'Mag-Sign Up dito',
-                      style: TextStyle(color: AppTheme.primaryAmber, fontWeight: FontWeight.bold, fontSize: 13),
+                      style: TextStyle(color: AppTheme.emeraldGreen, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
                 ],

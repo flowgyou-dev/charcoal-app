@@ -77,14 +77,22 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 12),
-              const Center(
-                child: Text('🛵', style: TextStyle(fontSize: 48)),
+              Center(
+                child: Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: AppTheme.headerForest.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(Icons.local_shipping_outlined, size: 38, color: AppTheme.headerForest),
+                ),
               ),
               const SizedBox(height: 16),
               const Text(
                 'Delivery Rider Portal',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.inkCharcoal),
               ),
               const SizedBox(height: 12),
 
@@ -92,19 +100,19 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryAmber.withOpacity(0.12),
+                  color: AppTheme.emeraldGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.primaryAmber.withOpacity(0.3)),
+                  border: Border.all(color: AppTheme.emeraldGreen.withValues(alpha: 0.3)),
                 ),
                 child: const Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline, color: AppTheme.primaryAmber, size: 20),
+                    Icon(Icons.info_outline, color: AppTheme.emeraldGreen, size: 20),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'Pansin: Ang Admin lamang ang lumilikha ng Driver accounts. Mangyaring kunin ang iyong login credentials mula sa Admin.',
-                        style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+                        style: TextStyle(color: AppTheme.inkCharcoal, fontSize: 12, height: 1.4),
                       ),
                     ),
                   ],
@@ -118,19 +126,20 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.15),
+                    color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+                    border: Border.all(color: Colors.red.shade200),
                   ),
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                    style: TextStyle(color: Colors.red.shade800, fontSize: 13),
                   ),
                 ),
 
               TextField(
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: AppTheme.inkCharcoal),
                 decoration: const InputDecoration(
                   labelText: 'Driver Email Address',
                   prefixIcon: Icon(Icons.badge_outlined),
@@ -140,6 +149,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
               TextField(
                 controller: _passCtrl,
                 obscureText: true,
+                style: const TextStyle(color: AppTheme.inkCharcoal),
                 decoration: const InputDecoration(
                   labelText: 'Assigned Password',
                   prefixIcon: Icon(Icons.lock_outline),
@@ -148,7 +158,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
               const SizedBox(height: 24),
 
               ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.purple.shade700),
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.headerForest),
                 onPressed: _isLoading ? null : _handleDriverLogin,
                 child: _isLoading
                     ? const SizedBox(

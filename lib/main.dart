@@ -22,7 +22,7 @@ class CharCoalApp extends StatelessWidget {
     return MaterialApp(
       title: 'CharCoal Express',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
       home: const RoleSelectScreen(),
     );
   }
