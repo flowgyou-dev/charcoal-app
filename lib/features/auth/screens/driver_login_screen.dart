@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../../driver/screens/driver_dashboard_screen.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/validators.dart';
 
 class DriverLoginScreen extends StatefulWidget {
   const DriverLoginScreen({super.key});
@@ -11,13 +12,30 @@ class DriverLoginScreen extends StatefulWidget {
 }
 
 class _DriverLoginScreenState extends State<DriverLoginScreen> {
-  final _emailCtrl = TextEditingController(text: 'cardo@charcoal.ph');
-  final _passCtrl = TextEditingController(text: 'charcoal123');
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
   String? _errorMessage;
 
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _handleDriverLogin() async {
+    if (_isLoading) return;
+
+    final emailErr = Validators.validateEmail(_emailCtrl.text);
+    final passErr = Validators.validateLoginPassword(_passCtrl.text);
+    final firstError = emailErr ?? passErr;
+    if (firstError != null) {
+      setState(() => _errorMessage = firstError);
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -26,7 +44,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
     try {
       final driverData = await _authService.signInDriver(
         email: _emailCtrl.text.trim(),
-        password: _passCtrl.text.trim(),
+        password: _passCtrl.text,
       );
 
       if (mounted) {
@@ -38,9 +56,11 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
         );
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+        });
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

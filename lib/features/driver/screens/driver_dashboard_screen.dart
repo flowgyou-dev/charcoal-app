@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/driver_service.dart';
 import '../../order/models/order_model.dart';
+import '../../profile/screens/profile_screen.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/connection_banner.dart';
 
 class DriverDashboardScreen extends StatefulWidget {
   final Map<String, dynamic> driverInfo;
@@ -15,9 +17,12 @@ class DriverDashboardScreen extends StatefulWidget {
 class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   final _driverService = DriverService();
   bool _isGpsOn = false;
+  final Set<String> _completingOrderIds = {};
 
   String get _driverId => widget.driverInfo['driverId']?.toString() ?? 'demo_driver_1';
   String get _driverName => widget.driverInfo['name']?.toString() ?? 'Kuya Driver';
+  String get _driverEmail => widget.driverInfo['email']?.toString() ?? '';
+  String get _driverPhone => widget.driverInfo['phone']?.toString() ?? '';
   String get _vehicle => widget.driverInfo['vehicle']?.toString() ?? 'Motorcycle';
   String get _plate => widget.driverInfo['plateNumber']?.toString() ?? '';
 
@@ -28,21 +33,39 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   }
 
   Future<void> _startGps() async {
-    await _driverService.startGpsBroadcast(_driverId, _driverName);
-    setState(() => _isGpsOn = true);
+    final ok = await _driverService.startGpsBroadcast(_driverId, _driverName);
+    if (!mounted) return;
+    setState(() => _isGpsOn = ok);
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Hindi ma-on ang GPS. Pakibuksan ang Location services at permission.'),
+        ),
+      );
+    }
   }
 
   Future<void> _toggleGps(bool val) async {
     if (val) {
-      await _driverService.startGpsBroadcast(_driverId, _driverName);
-      setState(() => _isGpsOn = true);
+      final ok = await _driverService.startGpsBroadcast(_driverId, _driverName);
+      if (!mounted) return;
+      setState(() => _isGpsOn = ok);
+      if (!ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kailangan naka-on ang GPS at Location permission para mag-broadcast.'),
+          ),
+        );
+      }
     } else {
       await _driverService.stopGpsBroadcast(_driverId);
-      setState(() => _isGpsOn = false);
+      if (mounted) setState(() => _isGpsOn = false);
     }
   }
 
   Future<void> _handleCompleteOrder(CharcoalOrder order) async {
+    if (_completingOrderIds.contains(order.id)) return;
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -67,14 +90,25 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     );
 
     if (confirm == true) {
-      await _driverService.completeOrder(order);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            backgroundColor: AppTheme.emeraldGreen,
-            content: Text('Order marked as Delivered & Paid! Inventory stock deducted.'),
-          ),
-        );
+      setState(() => _completingOrderIds.add(order.id));
+      try {
+        await _driverService.completeOrder(order);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: AppTheme.emeraldGreen,
+              content: Text('Order marked as Delivered & Paid! Inventory stock deducted.'),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Hindi na-update ang delivery: $e')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _completingOrderIds.remove(order.id));
       }
     }
   }
@@ -108,9 +142,27 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               ),
             ],
           ),
+          IconButton(
+            icon: const Icon(Icons.account_circle_outlined, color: Colors.white70),
+            tooltip: 'Account & Settings',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileScreen(
+                    name: _driverName,
+                    email: _driverEmail,
+                    phone: _driverPhone,
+                    role: 'driver',
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
-      body: Column(
+      body: ConnectionBanner(
+        child: Column(
         children: [
           // Driver Status Banner
           Container(
@@ -287,9 +339,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(backgroundColor: AppTheme.emeraldGreen),
-                                  onPressed: () => _handleCompleteOrder(order),
+                                  onPressed: _completingOrderIds.contains(order.id)
+                                      ? null
+                                      : () => _handleCompleteOrder(order),
                                   icon: const Icon(Icons.check_circle_outline),
-                                  label: const Text('MARK DELIVERED & PAID'),
+                                  label: Text(
+                                    _completingOrderIds.contains(order.id)
+                                        ? 'UPDATING...'
+                                        : 'MARK DELIVERED & PAID',
+                                  ),
                                 ),
                               ),
                             ],
@@ -303,6 +361,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ref, onValue, update, push } from 'firebase/database';
 import { db } from '../firebase';
-import { Package, PlusCircle, Edit3, History, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { sanitizeText, validatePositiveInt, validatePositivePrice } from '../utils/validators';
+import { Package, PlusCircle, Edit3, History, ArrowDownRight, ArrowUpRight, AlertCircle } from 'lucide-react';
 
 export default function Inventory() {
   const [inventory, setInventory] = useState({
@@ -16,6 +17,8 @@ export default function Inventory() {
   const [restockQty, setRestockQty] = useState(50);
   const [restockReason, setRestockReason] = useState('New supplier delivery');
   const [newPrice, setNewPrice] = useState(250);
+  const [modalError, setModalError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const invRef = ref(db, 'inventory');
@@ -46,39 +49,68 @@ export default function Inventory() {
 
   const handleRestock = async (e) => {
     e.preventDefault();
-    const qty = parseInt(restockQty, 10);
-    if (!qty || qty <= 0) return;
+    if (isSubmitting) return;
+    setModalError('');
 
-    const newStock = (inventory.currentStock || 0) + qty;
-    await update(ref(db, 'inventory'), {
-      currentStock: newStock,
-      lastUpdated: new Date().toISOString()
-    });
+    const qtyErr = validatePositiveInt(restockQty, 1, 10000, 'Restock quantity');
+    if (qtyErr) return setModalError(qtyErr);
 
-    // Log history
-    await push(ref(db, 'inventory_history'), {
-      type: 'RESTOCK',
-      quantity: qty,
-      reason: restockReason || 'Restocked',
-      newBalance: newStock,
-      timestamp: new Date().toISOString()
-    });
+    const cleanReason = sanitizeText(restockReason);
+    if (cleanReason.length > 200) {
+      return setModalError('Supplier note must be at most 200 characters.');
+    }
 
-    setShowRestockModal(false);
-    setRestockQty(50);
+    const qty = Number(restockQty);
+    setIsSubmitting(true);
+    try {
+      const newStock = (inventory.currentStock || 0) + qty;
+      await update(ref(db, 'inventory'), {
+        currentStock: newStock,
+        lastUpdated: new Date().toISOString()
+      });
+
+      // Log history
+      await push(ref(db, 'inventory_history'), {
+        type: 'RESTOCK',
+        quantity: qty,
+        reason: cleanReason || 'Restocked',
+        newBalance: newStock,
+        timestamp: new Date().toISOString()
+      });
+
+      setShowRestockModal(false);
+      setRestockQty(50);
+      setModalError('');
+    } catch (err) {
+      setModalError(err.message || 'Failed to restock inventory.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleUpdatePrice = async (e) => {
     e.preventDefault();
-    const price = parseFloat(newPrice);
-    if (!price || price <= 0) return;
+    if (isSubmitting) return;
+    setModalError('');
 
-    await update(ref(db, 'inventory'), {
-      pricePerUnit: price,
-      lastUpdated: new Date().toISOString()
-    });
+    const priceErr = validatePositivePrice(newPrice, 1, 50000, 'Price per sack');
+    if (priceErr) return setModalError(priceErr);
 
-    setShowPriceModal(false);
+    const price = Number(newPrice);
+    setIsSubmitting(true);
+    try {
+      await update(ref(db, 'inventory'), {
+        pricePerUnit: price,
+        lastUpdated: new Date().toISOString()
+      });
+
+      setShowPriceModal(false);
+      setModalError('');
+    } catch (err) {
+      setModalError(err.message || 'Failed to update price.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -208,11 +240,19 @@ export default function Inventory() {
             <h3 className="font-bold text-lg text-white mb-1">Restock Charcoal Sacks</h3>
             <p className="text-xs text-slate-400 mb-4">Magdagdag ng bagong dating na uling sa imbentaryo.</p>
             <form onSubmit={handleRestock} className="space-y-4 text-xs">
+              {modalError && (
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-start gap-2 text-rose-300">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <span>{modalError}</span>
+                </div>
+              )}
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">Bilang ng Sako (+)</label>
                 <input
                   type="number"
                   min="1"
+                  max="10000"
+                  step="1"
                   value={restockQty}
                   onChange={e => setRestockQty(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-mono text-sm focus:outline-amber-500"
@@ -223,6 +263,7 @@ export default function Inventory() {
                 <label className="block text-slate-300 font-semibold mb-1">Paliwanag / Supplier Note</label>
                 <input
                   type="text"
+                  maxLength={200}
                   value={restockReason}
                   onChange={e => setRestockReason(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs focus:outline-amber-500"
@@ -232,16 +273,21 @@ export default function Inventory() {
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowRestockModal(false)}
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    setModalError('');
+                    setShowRestockModal(false);
+                  }}
                   className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl font-semibold text-slate-300"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold shadow-md"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white rounded-xl font-bold shadow-md"
                 >
-                  Confirm Restock
+                  {isSubmitting ? 'Saving...' : 'Confirm Restock'}
                 </button>
               </div>
             </form>
@@ -256,12 +302,19 @@ export default function Inventory() {
             <h3 className="font-bold text-lg text-white mb-1">Edit Price per Sack</h3>
             <p className="text-xs text-slate-400 mb-4">I-update ang presyo bawat sako ng uling sa mobile checkout.</p>
             <form onSubmit={handleUpdatePrice} className="space-y-4 text-xs">
+              {modalError && (
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-start gap-2 text-rose-300">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <span>{modalError}</span>
+                </div>
+              )}
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">Presyo bawat Sako (₱)</label>
                 <input
                   type="number"
                   step="0.01"
                   min="1"
+                  max="50000"
                   value={newPrice}
                   onChange={e => setNewPrice(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-mono text-sm focus:outline-amber-500"
@@ -271,16 +324,21 @@ export default function Inventory() {
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowPriceModal(false)}
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    setModalError('');
+                    setShowPriceModal(false);
+                  }}
                   className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl font-semibold text-slate-300"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white rounded-xl font-bold shadow-md"
                 >
-                  Save New Price
+                  {isSubmitting ? 'Saving...' : 'Save New Price'}
                 </button>
               </div>
             </form>

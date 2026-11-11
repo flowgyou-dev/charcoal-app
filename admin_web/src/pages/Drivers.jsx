@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { ref, onValue, set, push, remove } from 'firebase/database';
-import { db } from '../firebase';
-import { UserPlus, Bike, Phone, Mail, ShieldAlert, Trash2 } from 'lucide-react';
+import { initializeApp, deleteApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { ref, onValue, set, remove } from 'firebase/database';
+import { db, firebaseConfig } from '../firebase';
+import {
+  sanitizeText,
+  validateEmail,
+  validateName,
+  validatePhPhone,
+  validateStrongPassword,
+} from '../utils/validators';
+import { UserPlus, Bike, Phone, Mail, ShieldAlert, Trash2, AlertCircle } from 'lucide-react';
 
 export default function Drivers() {
   const [drivers, setDrivers] = useState([]);
@@ -11,7 +20,9 @@ export default function Drivers() {
   const [vehicle, setVehicle] = useState('Motorcycle (Honda Wave 110)');
   const [plateNumber, setPlateNumber] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('charcoal123');
+  const [password, setPassword] = useState('');
+  const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const driversRef = ref(db, 'drivers');
@@ -29,34 +40,98 @@ export default function Drivers() {
 
   const handleCreateDriver = async (e) => {
     e.preventDefault();
-    if (!name || !email) return;
+    if (isSubmitting) return;
+    setFormError('');
 
-    const newDriverRef = push(ref(db, 'drivers'));
-    const driverId = newDriverRef.key;
+    const nameErr = validateName(name, 'Driver Name');
+    if (nameErr) return setFormError(nameErr);
 
-    await set(newDriverRef, {
-      name,
-      phone,
-      vehicle,
-      plateNumber,
-      email,
-      password,
-      isOnline: false,
-      createdAt: new Date().toISOString()
-    });
+    const phoneErr = validatePhPhone(phone);
+    if (phoneErr) return setFormError(phoneErr);
 
-    // Reset form
-    setName('');
-    setPhone('');
-    setPlateNumber('');
-    setEmail('');
-    setPassword('charcoal123');
-    setShowModal(false);
+    const cleanVehicle = sanitizeText(vehicle);
+    if (!cleanVehicle || cleanVehicle.length < 2 || cleanVehicle.length > 60) {
+      return setFormError('Vehicle type must be 2–60 characters.');
+    }
+
+    const cleanPlate = sanitizeText(plateNumber);
+    if (cleanPlate.length > 20) {
+      return setFormError('Plate number must be at most 20 characters.');
+    }
+
+    const emailErr = validateEmail(email);
+    if (emailErr) return setFormError(emailErr);
+
+    const passErr = validateStrongPassword(password);
+    if (passErr) return setFormError(passErr);
+
+    setIsSubmitting(true);
+    let secondaryApp = null;
+    try {
+      const cleanName = sanitizeText(name);
+      const cleanPhone = phone.replace(/[\s\-()]/g, '').trim();
+      const cleanEmail = email.trim().toLowerCase();
+
+      // Create real Firebase Auth user on a secondary app so Admin stays logged in
+      secondaryApp = initializeApp(firebaseConfig, `DriverCreator-${Date.now()}`);
+      const secondaryAuth = getAuth(secondaryApp);
+      const cred = await createUserWithEmailAndPassword(secondaryAuth, cleanEmail, password);
+      const driverUid = cred.user.uid;
+
+      // Save safe profile metadata without password
+      await set(ref(db, `drivers/${driverUid}`), {
+        uid: driverUid,
+        name: cleanName,
+        phone: cleanPhone,
+        vehicle: cleanVehicle,
+        plateNumber: cleanPlate,
+        email: cleanEmail,
+        role: 'driver',
+        isOnline: false,
+        createdAt: new Date().toISOString(),
+      });
+
+      await set(ref(db, `users/${driverUid}`), {
+        uid: driverUid,
+        name: cleanName,
+        phone: cleanPhone,
+        email: cleanEmail,
+        role: 'driver',
+        createdAt: new Date().toISOString(),
+      });
+
+      await signOut(secondaryAuth);
+
+      // Reset form
+      setName('');
+      setPhone('');
+      setPlateNumber('');
+      setEmail('');
+      setPassword('');
+      setFormError('');
+      setShowModal(false);
+    } catch (err) {
+      if (err.code === 'auth/email-already-in-use') {
+        setFormError('This driver email is already registered in Firebase Auth.');
+      } else {
+        setFormError(err.message || 'Failed to create driver account.');
+      }
+    } finally {
+      if (secondaryApp) {
+        try {
+          await deleteApp(secondaryApp);
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeleteDriver = async (driverId) => {
     if (confirm('Sigurado ka bang gusto mong tanggalin ang driver na ito?')) {
       await remove(ref(db, `drivers/${driverId}`));
+      await remove(ref(db, `driver_locations/${driverId}`));
     }
   };
 
@@ -185,12 +260,19 @@ export default function Drivers() {
             </p>
             
             <form onSubmit={handleCreateDriver} className="space-y-4 text-xs">
+              {formError && (
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-start gap-2 text-rose-300">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-300 font-semibold mb-1">Pangalan ng Driver</label>
                   <input
                     type="text"
                     required
+                    maxLength={60}
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="Hal. Cardo Dalisay"
@@ -202,9 +284,10 @@ export default function Drivers() {
                   <input
                     type="text"
                     required
+                    maxLength={15}
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
-                    placeholder="Hal. 0917-888-9900"
+                    placeholder="Hal. 09171234567"
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs focus:outline-amber-500"
                   />
                 </div>
@@ -215,6 +298,8 @@ export default function Drivers() {
                   <label className="block text-slate-300 font-semibold mb-1">Uri ng Sasakyan</label>
                   <input
                     type="text"
+                    required
+                    maxLength={60}
                     value={vehicle}
                     onChange={e => setVehicle(e.target.value)}
                     placeholder="Hal. Honda Wave 110"
@@ -225,6 +310,7 @@ export default function Drivers() {
                   <label className="block text-slate-300 font-semibold mb-1">Plate Number</label>
                   <input
                     type="text"
+                    maxLength={20}
                     value={plateNumber}
                     onChange={e => setPlateNumber(e.target.value)}
                     placeholder="Hal. 7821-AB"
@@ -239,6 +325,7 @@ export default function Drivers() {
                   <input
                     type="email"
                     required
+                    maxLength={100}
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="Hal. cardo@charcoal.ph"
@@ -246,12 +333,14 @@ export default function Drivers() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Temporary Password</label>
+                  <label className="block text-slate-300 font-semibold mb-1">Assigned Password</label>
                   <input
-                    type="text"
+                    type="password"
                     required
+                    maxLength={64}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
+                    placeholder="Min 8 chars, uppercase, number, symbol"
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs font-mono focus:outline-amber-500"
                   />
                 </div>
@@ -260,16 +349,21 @@ export default function Drivers() {
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    setFormError('');
+                    setShowModal(false);
+                  }}
                   className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl font-semibold text-slate-300"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold shadow-md"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white rounded-xl font-bold shadow-md"
                 >
-                  Create & Save Account
+                  {isSubmitting ? 'Creating...' : 'Create & Save Account'}
                 </button>
               </div>
             </form>

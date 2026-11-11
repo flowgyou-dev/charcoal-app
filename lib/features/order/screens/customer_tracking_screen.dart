@@ -6,6 +6,7 @@ import '../models/order_model.dart';
 import '../services/order_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/connection_banner.dart';
 
 class CustomerTrackingScreen extends StatefulWidget {
   final CharcoalOrder order;
@@ -41,7 +42,8 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
       appBar: AppBar(
         title: Text('Track ${widget.order.id}'),
       ),
-      body: StreamBuilder<DatabaseEvent>(
+      body: ConnectionBanner(
+        child: StreamBuilder<DatabaseEvent>(
         stream: FirebaseDatabase.instance.ref('${AppConstants.dbOrders}/${widget.order.id}').onValue,
         builder: (context, orderSnapshot) {
           CharcoalOrder currentOrder = widget.order;
@@ -224,6 +226,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
             ],
           );
         },
+      ),
       ),
     );
   }

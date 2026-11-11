@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../../order/screens/customer_home_screen.dart';
+import '../../../core/utils/validators.dart';
 
 class CustomerRegisterScreen extends StatefulWidget {
   const CustomerRegisterScreen({super.key});
@@ -18,9 +19,26 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _handleRegister() async {
-    if (_nameCtrl.text.isEmpty || _emailCtrl.text.isEmpty || _passCtrl.text.isEmpty) {
-      setState(() => _errorMessage = 'Pakilagay ang lahat ng kinakailangang impormasyon.');
+    if (_isLoading) return;
+
+    final nameErr = Validators.validateName(_nameCtrl.text, label: 'Pangalan / Negosyo');
+    final phoneErr = Validators.validatePhPhone(_phoneCtrl.text);
+    final emailErr = Validators.validateEmail(_emailCtrl.text);
+    final passErr = Validators.validateStrongPassword(_passCtrl.text);
+
+    final firstError = nameErr ?? phoneErr ?? emailErr ?? passErr;
+    if (firstError != null) {
+      setState(() => _errorMessage = firstError);
       return;
     }
 
@@ -31,10 +49,10 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
 
     try {
       final user = await _authService.registerCustomer(
-        name: _nameCtrl.text.trim(),
-        phone: _phoneCtrl.text.trim(),
-        email: _emailCtrl.text.trim(),
-        password: _passCtrl.text.trim(),
+        name: _nameCtrl.text,
+        phone: _phoneCtrl.text,
+        email: _emailCtrl.text,
+        password: _passCtrl.text,
       );
 
       if (mounted) {
@@ -45,9 +63,11 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
         );
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Hindi makapag-rehistro. Subukang gumamit ng ibang email o mas mahabang password.';
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Hindi makapag-rehistro. Subukang gumamit ng ibang email o i-check ang internet.';
+        });
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -91,36 +111,44 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
 
               TextField(
                 controller: _nameCtrl,
+                maxLength: 60,
                 decoration: const InputDecoration(
                   labelText: 'Pangalan / Tindahan / Ihawan Name',
                   prefixIcon: Icon(Icons.person_outline),
+                  counterText: '',
                 ),
               ),
               const SizedBox(height: 14),
               TextField(
                 controller: _phoneCtrl,
+                maxLength: 15,
                 keyboardType: TextInputType.phone,
                 decoration: const InputDecoration(
-                  labelText: 'Contact Phone Number',
+                  labelText: 'Contact Phone Number (09XXXXXXXXX)',
                   prefixIcon: Icon(Icons.phone_outlined),
+                  counterText: '',
                 ),
               ),
               const SizedBox(height: 14),
               TextField(
                 controller: _emailCtrl,
+                maxLength: 100,
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
                   labelText: 'Email Address',
                   prefixIcon: Icon(Icons.email_outlined),
+                  counterText: '',
                 ),
               ),
               const SizedBox(height: 14),
               TextField(
                 controller: _passCtrl,
+                maxLength: 64,
                 obscureText: true,
                 decoration: const InputDecoration(
-                  labelText: 'Password (At least 6 characters)',
+                  labelText: 'Strong Password (8+ chars, A-Z, 0-9, symbol)',
                   prefixIcon: Icon(Icons.lock_outline),
+                  counterText: '',
                 ),
               ),
               const SizedBox(height: 24),

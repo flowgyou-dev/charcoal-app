@@ -3,6 +3,7 @@ import '../models/order_model.dart';
 import '../services/order_service.dart';
 import 'customer_tracking_screen.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/connection_banner.dart';
 
 class CustomerOrdersScreen extends StatelessWidget {
   final String customerId;
@@ -15,12 +16,21 @@ class CustomerOrdersScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('My Orders')),
-      body: StreamBuilder<List<CharcoalOrder>>(
-        stream: orderService.streamCustomerOrders(customerId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: ConnectionBanner(
+        child: StreamBuilder<List<CharcoalOrder>>(
+          stream: orderService.streamCustomerOrders(customerId),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Center(
+                child: Text(
+                  'Hindi ma-load ang iyong mga order. I-check ang internet.',
+                  style: TextStyle(color: Colors.white60),
+                ),
+              );
+            }
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
           final orders = snapshot.data ?? [];
           if (orders.isEmpty) {
@@ -83,6 +93,7 @@ class CustomerOrdersScreen extends StatelessWidget {
             },
           );
         },
+      ),
       ),
     );
   }

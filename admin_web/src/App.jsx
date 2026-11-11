@@ -1,15 +1,73 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { ref, get } from 'firebase/database';
+import { auth, db } from './firebase';
+import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import Orders from './pages/Orders';
 import Drivers from './pages/Drivers';
 import LiveTracking from './pages/LiveTracking';
 import Analytics from './pages/Analytics';
-import { LayoutDashboard, Package, ShoppingCart, Users, MapPin, BarChart3, Menu, X, Flame } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, MapPin, BarChart3, Menu, X, Flame, LogOut } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [adminUser, setAdminUser] = useState(null);
+  const [authChecking, setAuthChecking] = useState(true);
+  const [authError, setAuthError] = useState('');
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setAdminUser(null);
+        setAuthChecking(false);
+        return;
+      }
+
+      try {
+        const snap = await get(ref(db, `users/${user.uid}`));
+        const userData = snap.exists() ? snap.val() : null;
+        if (userData && userData.role === 'admin') {
+          setAdminUser({
+            uid: user.uid,
+            email: user.email || userData.email,
+            name: userData.name || 'Business Owner',
+          });
+          setAuthError('');
+        } else {
+          await signOut(auth);
+          setAdminUser(null);
+          setAuthError('Access denied. Only verified Admin accounts can access this portal.');
+        }
+      } catch {
+        await signOut(auth);
+        setAdminUser(null);
+        setAuthError('Unable to verify Admin permissions. Please sign in again.');
+      } finally {
+        setAuthChecking(false);
+      }
+    });
+
+    return () => unsub();
+  }, []);
+
+  const handleLogout = async () => {
+    await signOut(auth);
+  };
+
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-300 text-sm">
+        Checking Admin session...
+      </div>
+    );
+  }
+
+  if (!adminUser) {
+    return <Login externalError={authError} />;
+  }
 
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
@@ -107,16 +165,23 @@ export default function App() {
         </div>
 
         {/* Footer Admin Info */}
-        <div className="pt-4 border-t border-slate-800">
-          <div className="flex items-center gap-3 px-2 py-2">
-            <div className="w-9 h-9 rounded-xl bg-amber-600/20 border border-amber-600/40 text-amber-400 font-bold text-xs flex items-center justify-center">
-              AD
+        <div className="pt-4 border-t border-slate-800 space-y-3">
+          <div className="flex items-center gap-3 px-2 py-1">
+            <div className="w-9 h-9 rounded-xl bg-amber-600/20 border border-amber-600/40 text-amber-400 font-bold text-xs flex items-center justify-center shrink-0">
+              {adminUser.name.slice(0, 2).toUpperCase()}
             </div>
-            <div className="text-xs">
-              <p className="font-bold text-white">Business Owner</p>
-              <p className="text-[11px] text-slate-400">admin@charcoal.ph</p>
+            <div className="text-xs min-w-0">
+              <p className="font-bold text-white truncate">{adminUser.name}</p>
+              <p className="text-[11px] text-slate-400 truncate">{adminUser.email}</p>
             </div>
           </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-800 hover:bg-rose-600/20 hover:text-rose-300 text-slate-300 text-xs font-semibold transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Sign Out
+          </button>
         </div>
       </aside>
 

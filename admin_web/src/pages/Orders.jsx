@@ -7,6 +7,10 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [filter, setFilter] = useState('ALL');
+  const [updatingOrderId, setUpdatingOrderId] = useState(null);
+  const [actionError, setActionError] = useState('');
+
+  const ALLOWED_STATUSES = ['Pending', 'Confirmed', 'Out for Delivery', 'Delivered', 'Cancelled'];
 
   useEffect(() => {
     // 1. Listen to orders
@@ -40,19 +44,51 @@ export default function Orders() {
   }, []);
 
   const handleUpdateStatus = async (orderId, newStatus) => {
-    await update(ref(db, `orders/${orderId}`), {
-      status: newStatus,
-      updatedAt: new Date().toISOString()
-    });
+    if (updatingOrderId === orderId) return;
+    if (!ALLOWED_STATUSES.includes(newStatus)) return;
+    setActionError('');
+    if (newStatus === 'Out for Delivery') {
+      const target = orders.find(o => o.id === orderId);
+      if (target && !target.driverId) {
+        setActionError('Please assign a delivery driver before dispatching.');
+        return;
+      }
+    }
+    setUpdatingOrderId(orderId);
+    try {
+      await update(ref(db, `orders/${orderId}`), {
+        status: newStatus,
+        updatedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      setActionError(err.message || 'Failed to update order status.');
+    } finally {
+      setUpdatingOrderId(null);
+    }
   };
 
   const handleAssignDriver = async (orderId, driverId) => {
+    if (updatingOrderId === orderId) return;
+    setActionError('');
+    if (!driverId) return;
     const selectedDriver = drivers.find(d => d.id === driverId);
-    await update(ref(db, `orders/${orderId}`), {
-      driverId: driverId,
-      driverName: selectedDriver ? selectedDriver.name : 'Unknown Driver',
-      updatedAt: new Date().toISOString()
-    });
+    if (!selectedDriver) {
+      setActionError('Selected driver does not exist.');
+      return;
+    }
+    setUpdatingOrderId(orderId);
+    try {
+      await update(ref(db, `orders/${orderId}`), {
+        driverId: driverId,
+        driverName: selectedDriver.name,
+        status: 'Confirmed',
+        updatedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      setActionError(err.message || 'Failed to assign driver.');
+    } finally {
+      setUpdatingOrderId(null);
+    }
   };
 
   const filteredOrders = orders.filter(ord => {
@@ -62,6 +98,11 @@ export default function Orders() {
 
   return (
     <div className="space-y-6">
+      {actionError && (
+        <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300">
+          {actionError}
+        </div>
+      )}
       {/* Header & Filter Pills */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -150,9 +191,10 @@ export default function Orders() {
                     {/* Driver Selector */}
                     <td className="p-4">
                       <select
+                        disabled={updatingOrderId === order.id || order.status === 'Delivered' || order.status === 'Cancelled'}
                         value={order.driverId || ''}
                         onChange={e => handleAssignDriver(order.id, e.target.value)}
-                        className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-amber-500"
+                        className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-amber-500 disabled:opacity-50"
                       >
                         <option value="">-- Assign Driver --</option>
                         {drivers.map(d => (
@@ -182,26 +224,29 @@ export default function Orders() {
 
                     {/* Action Dropdown / Buttons */}
                     <td className="p-4 text-right space-x-1.5">
-                      {order.status !== 'Out for Delivery' && order.status !== 'Delivered' && (
+                      {order.status !== 'Out for Delivery' && order.status !== 'Delivered' && order.status !== 'Cancelled' && (
                         <button
+                          disabled={updatingOrderId === order.id}
                           onClick={() => handleUpdateStatus(order.id, 'Out for Delivery')}
-                          className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow-sm"
+                          className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-sm"
                         >
                           Dispatch
                         </button>
                       )}
                       {order.status === 'Out for Delivery' && (
                         <button
+                          disabled={updatingOrderId === order.id}
                           onClick={() => handleUpdateStatus(order.id, 'Delivered')}
-                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm"
+                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-sm"
                         >
                           Complete
                         </button>
                       )}
                       {order.status !== 'Cancelled' && order.status !== 'Delivered' && (
                         <button
+                          disabled={updatingOrderId === order.id}
                           onClick={() => handleUpdateStatus(order.id, 'Cancelled')}
-                          className="px-2.5 py-1 bg-slate-700 hover:bg-rose-600 text-slate-300 hover:text-white rounded-lg text-xs font-medium"
+                          className="px-2.5 py-1 bg-slate-700 hover:bg-rose-600 disabled:opacity-50 text-slate-300 hover:text-white rounded-lg text-xs font-medium"
                         >
                           Cancel
                         </button>

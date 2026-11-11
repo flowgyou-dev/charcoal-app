@@ -5,10 +5,13 @@ import 'package:geolocator/geolocator.dart';
 import '../../auth/models/user_model.dart';
 import '../../inventory/services/inventory_service.dart';
 import '../../inventory/models/inventory_model.dart';
+import '../../profile/screens/profile_screen.dart';
 import '../services/order_service.dart';
 import 'customer_tracking_screen.dart';
 import 'customer_orders_screen.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/validators.dart';
+import '../../../core/widgets/connection_banner.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   final AppUser currentUser;
@@ -29,21 +32,44 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   final MapController _mapController = MapController();
   bool _isOrdering = false;
 
+  @override
+  void dispose() {
+    _addressCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _getCurrentLocation() async {
     try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Naka-off ang GPS/Location ng device. I-on ito o i-tap ang mapa.')),
+        );
+        return;
+      }
+
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-        final pos = await Geolocator.getCurrentPosition();
-        setState(() {
-          _pinnedLocation = LatLng(pos.latitude, pos.longitude);
-        });
-        _mapController.move(_pinnedLocation, 16.0);
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kailangan ng Location permission para sa My GPS, o i-tap ang mapa.')),
+        );
+        return;
       }
-    } catch (e) {
+
+      final pos = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
+      setState(() {
+        _pinnedLocation = LatLng(pos.latitude, pos.longitude);
+      });
+      _mapController.move(_pinnedLocation, 16.0);
+    } catch (_) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Hindi makuha ang GPS. Paki-tap sa mapa ang iyong lokasyon.')),
       );
@@ -51,10 +77,17 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Future<void> _handlePlaceOrder(CharcoalInventory inv) async {
-    if (_quantity > inv.currentStock) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Paumanhin, ${inv.currentStock} sako na lang ang natitira sa stock.')),
-      );
+    if (_isOrdering) return;
+
+    final qtyErr = Validators.validateOrderQuantity(_quantity, inv.currentStock);
+    if (qtyErr != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(qtyErr)));
+      return;
+    }
+
+    final addrErr = Validators.validateAddress(_addressCtrl.text);
+    if (addrErr != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(addrErr)));
       return;
     }
 
@@ -65,31 +98,31 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         customerId: widget.currentUser.uid,
         customerName: widget.currentUser.name,
         customerPhone: widget.currentUser.phone,
-        deliveryAddress: _addressCtrl.text.trim(),
+        deliveryAddress: _addressCtrl.text,
         deliveryLat: _pinnedLocation.latitude,
         deliveryLng: _pinnedLocation.longitude,
         sacksOrdered: _quantity,
         pricePerUnit: inv.pricePerUnit,
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            backgroundColor: AppTheme.emeraldGreen,
-            content: Text('Order Placed Successfully! Cash on Delivery (COD)'),
-          ),
-        );
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CustomerTrackingScreen(order: order),
-          ),
-        );
-      }
-    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        const SnackBar(
+          backgroundColor: AppTheme.emeraldGreen,
+          content: Text('Order Placed Successfully! Cash on Delivery (COD)'),
+        ),
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CustomerTrackingScreen(order: order),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Hindi maisumite ang order: ${e.toString().replaceAll('Exception: ', '')}')),
       );
     } finally {
       if (mounted) setState(() => _isOrdering = false);
@@ -114,22 +147,52 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               );
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.account_circle_outlined, color: Colors.white70),
+            tooltip: 'Account & Settings',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileScreen(
+                    name: widget.currentUser.name,
+                    email: widget.currentUser.email,
+                    phone: widget.currentUser.phone,
+                    role: widget.currentUser.role,
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
-      body: StreamBuilder<CharcoalInventory>(
-        stream: _inventoryService.inventoryStream,
-        builder: (context, snapshot) {
-          final inv = snapshot.data ?? CharcoalInventory(
-            itemName: 'Standard Charcoal Sack',
-            currentStock: 100,
-            pricePerUnit: 250.0,
-            lowStockLimit: 20,
-            unit: 'sack',
-          );
+      body: ConnectionBanner(
+        child: StreamBuilder<CharcoalInventory>(
+          stream: _inventoryService.inventoryStream,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Text(
+                    'Hindi ma-load ang stock mula sa server. Paki-check ang internet connection.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ),
+              );
+            }
+            final inv = snapshot.data ?? CharcoalInventory(
+              itemName: 'Standard Charcoal Sack',
+              currentStock: 100,
+              pricePerUnit: 250.0,
+              lowStockLimit: 20,
+              unit: 'sack',
+            );
 
-          final total = _quantity * inv.pricePerUnit;
+            final total = _quantity * inv.pricePerUnit;
 
-          return SingleChildScrollView(
+            return SingleChildScrollView(
             padding: const EdgeInsets.all(18.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -340,10 +403,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         const SizedBox(height: 12),
                         TextField(
                           controller: _addressCtrl,
+                          maxLength: 200,
                           decoration: const InputDecoration(
                             labelText: 'Address Details / Landmarks',
                             hintText: 'Hal. Brgy. 4, Katapat ng Bakery',
                             prefixIcon: Icon(Icons.home_outlined),
+                            counterText: '',
                           ),
                         ),
                       ],
@@ -394,7 +459,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
                 // Order Checkout Button
                 ElevatedButton(
-                  onPressed: _isOrdering ? null : () => _handlePlaceOrder(inv),
+                  onPressed: (_isOrdering || inv.currentStock <= 0) ? null : () => _handlePlaceOrder(inv),
                   child: _isOrdering
                       ? const SizedBox(
                           height: 20,
@@ -404,7 +469,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('PLACE ORDER (COD)'),
+                            Text(inv.currentStock <= 0 ? 'OUT OF STOCK' : 'PLACE ORDER (COD)'),
                             Text(
                               '₱ ${total.toStringAsFixed(2)}',
                               style: const TextStyle(fontFamily: 'monospace', fontSize: 16),
@@ -417,6 +482,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             ),
           );
         },
+      ),
       ),
     );
   }

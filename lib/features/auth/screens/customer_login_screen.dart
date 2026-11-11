@@ -3,6 +3,7 @@ import '../services/auth_service.dart';
 import 'customer_register_screen.dart';
 import '../../order/screens/customer_home_screen.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/validators.dart';
 
 class CustomerLoginScreen extends StatefulWidget {
   const CustomerLoginScreen({super.key});
@@ -12,13 +13,30 @@ class CustomerLoginScreen extends StatefulWidget {
 }
 
 class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
-  final _emailCtrl = TextEditingController(text: 'customer@charcoal.ph');
-  final _passCtrl = TextEditingController(text: 'password123');
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
   String? _errorMessage;
 
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _handleLogin() async {
+    if (_isLoading) return;
+
+    final emailErr = Validators.validateEmail(_emailCtrl.text);
+    final passErr = Validators.validateLoginPassword(_passCtrl.text);
+    final firstError = emailErr ?? passErr;
+    if (firstError != null) {
+      setState(() => _errorMessage = firstError);
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -27,7 +45,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
     try {
       final user = await _authService.signInCustomer(
         email: _emailCtrl.text.trim(),
-        password: _passCtrl.text.trim(),
+        password: _passCtrl.text,
       );
 
       if (mounted) {
@@ -39,9 +57,14 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
         );
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Hindi makapag-log in. Pakitingnan ang email at password.';
-      });
+      if (mounted) {
+        final msg = e.toString().replaceAll('Exception: ', '');
+        setState(() {
+          _errorMessage = msg.contains('firebase') || msg.contains('Exception')
+              ? 'Hindi makapag-log in. Pakitingnan ang email at password.'
+              : msg;
+        });
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
