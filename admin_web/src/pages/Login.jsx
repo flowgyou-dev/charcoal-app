@@ -9,9 +9,9 @@ import { auth, db } from '../firebase';
 import { validateEmail, validateName, validateStrongPassword, sanitizeText } from '../utils/validators';
 import { Flame, Lock, Mail, ShieldCheck, AlertCircle, User } from 'lucide-react';
 
-export default function Login({ externalError }) {
+export default function Login({ externalError, isSettingUpRef, onAdminInitialized }) {
   const [isSetupMode, setIsSetupMode] = useState(false);
-  const [canInitializeAdmin, setCanInitializeAdmin] = useState(false);
+  const [canInitializeAdmin, setCanInitializeAdmin] = useState(true);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,12 +26,14 @@ export default function Login({ externalError }) {
     const checkInit = async () => {
       try {
         const snap = await get(ref(db, 'admins_initialized'));
-        if (!snap.exists()) {
+        if (snap.exists() && snap.val() === true) {
+          setCanInitializeAdmin(false);
+        } else {
           setCanInitializeAdmin(true);
         }
       } catch {
-        // Ignore if database rules block unauthenticated read on admins_initialized
-        setCanInitializeAdmin(false);
+        // Keep setup toggle available if unauthenticated read is blocked by rules
+        setCanInitializeAdmin(true);
       }
     };
     checkInit();
@@ -66,28 +68,38 @@ export default function Login({ externalError }) {
 
     setIsSubmitting(true);
     try {
-      const cleanEmail = email.trim();
+      const cleanEmail = email.trim().toLowerCase();
       if (isSetupMode) {
+        if (isSettingUpRef) isSettingUpRef.current = true;
+
+        const cred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
+        const uid = cred.user.uid;
+
         const initSnap = await get(ref(db, 'admins_initialized'));
-        if (initSnap.exists()) {
+        if (initSnap.exists() && initSnap.val() === true) {
+          await signOut(auth);
+          if (isSettingUpRef) isSettingUpRef.current = false;
           setError('An admin account already exists. Please sign in.');
           setIsSetupMode(false);
           setCanInitializeAdmin(false);
           return;
         }
 
-        const cred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
-        const uid = cred.user.uid;
-
+        const cleanName = sanitizeText(name);
         await set(ref(db, `users/${uid}`), {
           uid,
           email: cleanEmail,
-          name: sanitizeText(name),
+          name: cleanName,
           phone: '',
           role: 'admin',
           createdAt: new Date().toISOString(),
         });
         await set(ref(db, 'admins_initialized'), true);
+
+        if (isSettingUpRef) isSettingUpRef.current = false;
+        if (onAdminInitialized) {
+          onAdminInitialized({ uid, email: cleanEmail, name: cleanName });
+        }
       } else {
         const cred = await signInWithEmailAndPassword(auth, cleanEmail, password);
         const roleSnap = await get(ref(db, `users/${cred.user.uid}/role`));
@@ -99,6 +111,14 @@ export default function Login({ externalError }) {
         }
       }
     } catch (err) {
+      if (isSettingUpRef) isSettingUpRef.current = false;
+      if (auth.currentUser && isSetupMode) {
+        try {
+          await signOut(auth);
+        } catch {
+          // Ignore signout error
+        }
+      }
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
         setError('Invalid email or password.');
       } else if (err.code === 'auth/email-already-in-use') {
@@ -109,6 +129,7 @@ export default function Login({ externalError }) {
         setError(err.message || 'Authentication failed.');
       }
     } finally {
+      if (isSettingUpRef) isSettingUpRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -208,9 +229,9 @@ export default function Login({ externalError }) {
                 setError('');
                 setIsSetupMode(!isSetupMode);
               }}
-              className="text-xs text-amber-400 hover:text-amber-300 font-semibold"
+              className="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-amber-400 hover:text-amber-300 font-semibold transition-colors"
             >
-              {isSetupMode ? 'Back to Admin Sign In' : 'First time here? Initialize First Admin Account'}
+              {isSetupMode ? 'Back to Admin Sign In' : 'First time here? Create Super Admin Account'}
             </button>
           </div>
         )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { ref, get } from 'firebase/database';
 import { auth, db } from './firebase';
@@ -17,9 +17,11 @@ export default function App() {
   const [adminUser, setAdminUser] = useState(null);
   const [authChecking, setAuthChecking] = useState(true);
   const [authError, setAuthError] = useState('');
+  const isSettingUpRef = useRef(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
+      if (isSettingUpRef.current) return;
       if (!user) {
         setAdminUser(null);
         setAuthChecking(false);
@@ -28,6 +30,7 @@ export default function App() {
 
       try {
         const snap = await get(ref(db, `users/${user.uid}`));
+        if (isSettingUpRef.current) return;
         const userData = snap.exists() ? snap.val() : null;
         if (userData && userData.role === 'admin') {
           setAdminUser({
@@ -42,6 +45,7 @@ export default function App() {
           setAuthError('Access denied. Only verified Admin accounts can access this portal.');
         }
       } catch {
+        if (isSettingUpRef.current) return;
         await signOut(auth);
         setAdminUser(null);
         setAuthError('Unable to verify Admin permissions. Please sign in again.');
@@ -66,7 +70,16 @@ export default function App() {
   }
 
   if (!adminUser) {
-    return <Login externalError={authError} />;
+    return (
+      <Login
+        externalError={authError}
+        isSettingUpRef={isSettingUpRef}
+        onAdminInitialized={(userObj) => {
+          setAuthError('');
+          setAdminUser(userObj);
+        }}
+      />
+    );
   }
 
   const navigation = [
