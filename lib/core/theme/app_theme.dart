@@ -59,20 +59,39 @@ class AppTheme {
           foregroundColor: Colors.white,
           disabledBackgroundColor: sageWatermark,
           disabledForegroundColor: mutedSlate,
+          minimumSize: const Size(64, 48),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           textStyle: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
+            letterSpacing: 0.3,
           ),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: headerForest,
+          minimumSize: const Size(64, 46),
+          side: const BorderSide(color: surfaceBorder),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: cardWhite,
         prefixIconColor: mutedSlate,
+        suffixIconColor: mutedSlate,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: surfaceBorder),
@@ -83,10 +102,19 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: headerForest, width: 2),
+          borderSide: const BorderSide(color: headerForest, width: 1.8),
         ),
-        labelStyle: const TextStyle(color: mutedSlate),
-        hintStyle: const TextStyle(color: mutedSlate),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.red.shade600),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.red.shade700, width: 1.8),
+        ),
+        labelStyle: const TextStyle(color: mutedSlate, fontSize: 13),
+        hintStyle: const TextStyle(color: mutedSlate, fontSize: 13),
+        errorStyle: TextStyle(color: Colors.red.shade700, fontSize: 11),
       ),
     );
   }

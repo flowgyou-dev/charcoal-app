@@ -4,6 +4,7 @@ import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail, signOu
 import { ref, onValue, set, update } from 'firebase/database';
 import { auth, db, firebaseConfig } from '../firebase';
 import {
+  checkPasswordRequirements,
   sanitizeText,
   validateEmail,
   validateName,
@@ -20,6 +21,8 @@ import {
   Ban,
   CheckCircle2,
   AlertCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 export default function Drivers() {
@@ -38,8 +41,10 @@ export default function Drivers() {
   const [plateNumber, setPlateNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const passReqs = checkPasswordRequirements(password);
 
   useEffect(() => {
     const unsubDrivers = onValue(
@@ -245,7 +250,7 @@ export default function Drivers() {
         <div>
           <h1 className="text-2xl font-bold text-charcoal-ink tracking-tight">Delivery Drivers Management</h1>
           <p className="text-sm text-charcoal-muted">
-            Create, edit, reset passwords, at kontrolin ang active status ng delivery drivers.
+            Create, edit, reset passwords, and manage the active status of delivery drivers.
           </p>
         </div>
         <button
@@ -285,7 +290,7 @@ export default function Drivers() {
         <div className="text-xs text-charcoal-muted">
           <p className="font-bold text-charcoal-ink">Admin-Controlled Driver Access</p>
           <p className="mt-0.5">
-            Kapag na-deactivate ang isang driver, automatic itong maba-block sa Firebase login at Realtime Database rules kahit sa Free Spark Plan.
+            Once a driver is deactivated, they are automatically blocked by Firebase login and Realtime Database rules even on the Free Spark Plan.
           </p>
         </div>
       </div>
@@ -294,7 +299,7 @@ export default function Drivers() {
       <div className="bg-white border border-charcoal-border rounded-2xl shadow-sm overflow-hidden">
         {drivers.length === 0 ? (
           <div className="py-16 text-center text-charcoal-muted text-sm">
-            Wala pang driver accounts.
+            No driver accounts yet.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -418,7 +423,7 @@ export default function Drivers() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white border border-charcoal-border rounded-2xl p-6 w-full max-w-lg shadow-2xl text-charcoal-ink">
             <h3 className="font-bold text-lg text-charcoal-ink mb-1">Create New Delivery Driver</h3>
-            <p className="text-xs text-charcoal-muted mb-4">I-fill out ang mga detalye ng driver para makapag-login sa mobile app.</p>
+            <p className="text-xs text-charcoal-muted mb-4">Fill out the driver details so they can log in to the mobile app.</p>
 
             <form onSubmit={handleCreateDriver} className="space-y-4 text-xs">
               {formError && (
@@ -492,15 +497,43 @@ export default function Drivers() {
                 </div>
                 <div>
                   <label className="block font-semibold mb-1">Assigned Password</label>
-                  <input
-                    type="password"
-                    required
-                    maxLength={64}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Min 8 chars, uppercase, number, symbol"
-                    className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 font-mono focus:outline-none focus:border-charcoal-header"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      maxLength={64}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Min 8 chars, uppercase, number, symbol"
+                      className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl pl-3.5 pr-10 py-2.5 font-mono focus:outline-none focus:border-charcoal-header"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-muted hover:text-charcoal-ink"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <div className="mt-2 p-2.5 rounded-xl bg-charcoal-canvas border border-charcoal-border grid grid-cols-2 gap-1.5 text-[11px]">
+                    {[
+                      { met: passReqs.hasMinLength, label: '8–64 characters' },
+                      { met: passReqs.hasUppercase, label: '1 uppercase letter' },
+                      { met: passReqs.hasNumber, label: '1 number' },
+                      { met: passReqs.hasSpecialChar, label: '1 special character' },
+                    ].map((req) => (
+                      <div
+                        key={req.label}
+                        className={`flex items-center gap-1.5 ${
+                          req.met ? 'text-charcoal-eco font-semibold' : 'text-charcoal-muted'
+                        }`}
+                      >
+                        <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 ${req.met ? 'opacity-100' : 'opacity-35'}`} />
+                        <span>{req.label}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2">
@@ -608,8 +641,8 @@ export default function Drivers() {
             </h3>
             <p className="text-xs text-charcoal-muted mb-4">
               {toggleDriverTarget.isActive === false
-                ? 'Papayagan ulit ang driver na ito na mag-log in at tumanggap ng deliveries.'
-                : 'Hindi na makakapag-log in o makakapag-update ng deliveries ang driver na ito.'}
+                ? 'This driver will be allowed to log in and accept deliveries again.'
+                : 'This driver will no longer be able to log in or update deliveries.'}
             </p>
             <div className="flex justify-end gap-2 text-xs">
               <button

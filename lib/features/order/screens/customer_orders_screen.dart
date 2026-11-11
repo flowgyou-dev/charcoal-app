@@ -68,7 +68,7 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Ibabalik ang stock sa inventory kapag na-cancel ang pending order na ito.',
+              'Stock will be restored to inventory when this pending order is cancelled.',
               style: TextStyle(fontSize: 12, color: AppTheme.mutedSlate),
             ),
             const SizedBox(height: 12),
@@ -76,8 +76,8 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
               controller: reasonCtrl,
               maxLength: 120,
               decoration: const InputDecoration(
-                labelText: 'Dahilan ng pag-cancel (optional)',
-                hintText: 'Hal. Nagkamali ng address',
+                labelText: 'Reason for cancellation (optional)',
+                hintText: 'e.g. Wrong delivery address',
                 counterText: '',
               ),
             ),
@@ -112,7 +112,7 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: AppTheme.emeraldGreen,
-          content: Text('Na-cancel ang order at naibalik ang stock.'),
+          content: Text('Order cancelled and stock restored.'),
         ),
       );
     } catch (e) {
@@ -120,7 +120,7 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Hindi ma-cancel: ${e.toString().replaceAll('Exception: ', '')}',
+            'Unable to cancel: ${e.toString().replaceAll('Exception: ', '')}',
           ),
         ),
       );
@@ -142,7 +142,7 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
                 child: Padding(
                   padding: EdgeInsets.all(24.0),
                   child: Text(
-                    'Hindi ma-load ang iyong mga order. Paki-check ang internet connection.',
+                    'Unable to load your orders. Please check your internet connection.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppTheme.mutedSlate),
                   ),
@@ -166,7 +166,7 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
                     Text('📦', style: TextStyle(fontSize: 48)),
                     SizedBox(height: 12),
                     Text(
-                      'Wala ka pang na-place na order.',
+                      'You have not placed any orders yet.',
                       style: TextStyle(color: AppTheme.mutedSlate),
                     ),
                   ],
@@ -236,7 +236,7 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '${o.sacksOrdered} Sako • ₱ ${o.totalAmount.toStringAsFixed(2)}',
+                            '${o.sacksOrdered} ${o.sacksOrdered == 1 ? 'Sack' : 'Sacks'} • ₱ ${o.totalAmount.toStringAsFixed(2)}',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,

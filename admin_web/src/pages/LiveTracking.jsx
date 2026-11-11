@@ -144,7 +144,7 @@ export default function LiveTracking() {
         <div>
           <h1 className="text-2xl font-bold text-charcoal-ink tracking-tight">Live Delivery &amp; Fleet Tracking</h1>
           <p className="text-sm text-charcoal-muted">
-            Real-time driver GPS tracking, OSRM road routes, at distance/ETA para sa active deliveries.
+            Real-time driver GPS tracking, OSRM road routes, and distance/ETA for active deliveries.
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold">
@@ -274,7 +274,7 @@ export default function LiveTracking() {
           </h3>
           {activeOrders.length === 0 ? (
             <div className="flex-1 flex items-center justify-center text-center text-xs text-charcoal-muted py-12">
-              Walang Confirmed o Out for Delivery orders ngayon.
+              No Confirmed or Out for Delivery orders at the moment.
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto divide-y divide-charcoal-border pr-1">

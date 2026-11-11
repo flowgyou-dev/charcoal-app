@@ -106,7 +106,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        _showSnack('Paki-on ang GPS ng device.');
+        _showSnack('Please enable device GPS.');
         return;
       }
       var permission = await Geolocator.checkPermission();
@@ -115,7 +115,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       }
       if (permission != LocationPermission.always &&
           permission != LocationPermission.whileInUse) {
-        _showSnack('Kailangan ng Location permission para makuha ang GPS.');
+        _showSnack('Location permission is required to detect your GPS.');
         return;
       }
 
@@ -134,7 +134,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       _safeMoveMap(nextLoc, 16.0);
       await _reverseGeocodeIfNeeded(nextLoc, forceFill: true);
     } catch (e) {
-      if (mounted) _showSnack('Hindi makuha ang GPS: $e');
+      if (mounted) _showSnack('Unable to get GPS location: $e');
     } finally {
       if (mounted) setState(() => _isLocating = false);
     }
@@ -209,7 +209,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         _refCtrl.text = result.refNumber;
       });
       _showSnack(
-        'Na-scan ang Reference No: ${result.refNumber}',
+        'Scanned Reference No: ${result.refNumber}',
         backgroundColor: AppTheme.emeraldGreen,
       );
     } catch (e) {
@@ -224,18 +224,18 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   Future<void> _handlePlaceOrder(CharcoalInventory inv) async {
     final address = _addressCtrl.text.trim();
     if (address.isEmpty) {
-      _showSnack('Ilagay muna ang iyong delivery address o landmark.');
+      _showSnack('Please enter your delivery address or landmark.');
       return;
     }
 
     if (inv.currentStock < _quantity || _quantity <= 0) {
-      _showSnack('Walang sapat na stock ng uling.');
+      _showSnack('Insufficient charcoal stock available.');
       return;
     }
 
     if (_paymentMethod == 'ONLINE_QR' &&
         (_scannedReceipt == null || _scannedReceipt!.refNumber.isEmpty)) {
-      _showSnack('I-upload at i-scan muna ang payment receipt bago mag-order.');
+      _showSnack('Please upload and scan your payment receipt before placing the order.');
       return;
     }
 
@@ -277,7 +277,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     } catch (e) {
       if (!mounted) return;
       _showSnack(
-        'Hindi maisumite ang order: ${e.toString().replaceAll('Exception: ', '')}',
+        'Unable to place order: ${e.toString().replaceAll('Exception: ', '')}',
       );
     } finally {
       if (mounted) setState(() => _isOrdering = false);
@@ -362,7 +362,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bumili ng Uling'),
+        title: const Text('Order Charcoal'),
         actions: [
           IconButton(
             icon: const Icon(Icons.receipt_long, color: Colors.white),
@@ -410,7 +410,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     child: Padding(
                       padding: EdgeInsets.all(24.0),
                       child: Text(
-                        'Hindi ma-load ang stock mula sa server. Paki-check ang internet connection.',
+                        'Unable to load stock from the server. Please check your internet connection.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppTheme.mutedSlate),
                       ),
@@ -429,7 +429,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     child: Padding(
                       padding: EdgeInsets.all(24.0),
                       child: Text(
-                        'Walang aktibong produkto sa inventory ngayon. Maghintay hanggang mag-stock ang Admin.',
+                        'No active product in inventory right now. Please wait for the Admin to restock.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppTheme.mutedSlate),
                       ),
@@ -552,7 +552,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Maligayang araw, ${widget.currentUser.name}!',
+                  'Welcome, ${widget.currentUser.name}!',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -561,7 +561,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 ),
                 const SizedBox(height: 2),
                 const Text(
-                  'Direktang delivery ng hardwood uling sa iyong lokasyon.',
+                  'Direct hardwood charcoal delivery to your doorstep.',
                   style: TextStyle(color: Colors.white70, fontSize: 11),
                 ),
               ],
@@ -607,7 +607,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '₱ ${inv.pricePerUnit.toStringAsFixed(2)} bawat ${inv.unit}',
+                        '₱ ${inv.pricePerUnit.toStringAsFixed(2)} per ${inv.unit}',
                         style: const TextStyle(
                           color: AppTheme.emeraldGreen,
                           fontWeight: FontWeight.bold,
@@ -635,7 +635,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Dami ng Sako:',
+                  'Order Quantity:',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -740,7 +740,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Maghanap ng lugar o i-tap ang mapa (${distKm.toStringAsFixed(1)} km mula sa ${settings.hubName}).',
+              'Search a place or tap the map (${distKm.toStringAsFixed(1)} km from ${settings.hubName}).',
               style: const TextStyle(fontSize: 11, color: AppTheme.mutedSlate),
             ),
             const SizedBox(height: 10),
@@ -869,7 +869,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               onChanged: (_) => _userEditedAddress = true,
               decoration: InputDecoration(
                 labelText: 'Address Details / Landmarks',
-                hintText: 'Hal. Brgy. 4, Katapat ng Bakery',
+                hintText: 'e.g. Brgy. 4, Across from Central Bakery',
                 prefixIcon: const Icon(Icons.home_outlined),
                 counterText: '',
                 suffixIcon: IconButton(
@@ -919,7 +919,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     value: 'COD',
                     icon: '💵',
                     title: 'Cash on Delivery',
-                    subtitle: 'Magbayad pagdating',
+                    subtitle: 'Pay upon delivery',
                     enabled: true,
                   ),
                 ),
@@ -984,7 +984,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'I-scan o magpadala sa:',
+                              'Scan QR or send payment to:',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: AppTheme.mutedSlate,
@@ -1063,7 +1063,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 const LinearProgressIndicator(),
                 const SizedBox(height: 6),
                 const Text(
-                  'Binabasa ng ML Kit OCR ang Reference No...',
+                  'Reading Reference No. via ML Kit OCR...',
                   style: TextStyle(fontSize: 11, color: AppTheme.mutedSlate),
                 ),
               ],

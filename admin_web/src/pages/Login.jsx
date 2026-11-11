@@ -7,8 +7,14 @@ import {
 } from 'firebase/auth';
 import { ref, get, set } from 'firebase/database';
 import { auth, db } from '../firebase';
-import { validateEmail, validateName, validateStrongPassword, sanitizeText } from '../utils/validators';
-import { Flame, Lock, Mail, ShieldCheck, AlertCircle, User, CheckCircle2, KeyRound } from 'lucide-react';
+import {
+  validateEmail,
+  validateName,
+  validateStrongPassword,
+  checkPasswordRequirements,
+  sanitizeText,
+} from '../utils/validators';
+import { Flame, Lock, Mail, ShieldCheck, AlertCircle, User, CheckCircle2, KeyRound, Eye, EyeOff } from 'lucide-react';
 
 export default function Login({ externalError, isSettingUpRef, onAdminInitialized }) {
   const [isSetupMode, setIsSetupMode] = useState(false);
@@ -16,6 +22,9 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState(externalError || '');
   const [notice, setNotice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,6 +74,10 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
       const passErr = validateStrongPassword(password);
       if (passErr) {
         setError(passErr);
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.');
         return;
       }
     } else if (!password.trim()) {
@@ -253,16 +266,74 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
             <div className="relative">
               <Lock className="w-4 h-4 text-charcoal-muted absolute left-3.5 top-3" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 maxLength={64}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={isSetupMode ? 'Min 8 chars, uppercase, number, symbol' : 'Enter password'}
-                className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl pl-10 pr-3.5 py-2.5 text-charcoal-ink focus:outline-none focus:border-charcoal-header"
+                className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl pl-10 pr-10 py-2.5 text-charcoal-ink focus:outline-none focus:border-charcoal-header"
               />
+              <button
+                type="button"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-2.5 text-charcoal-muted hover:text-charcoal-ink"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
+
+          {isSetupMode && (
+            <>
+              <div>
+                <label className="block text-charcoal-ink font-semibold mb-1.5">Confirm Password</label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-charcoal-muted absolute left-3.5 top-3" />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    maxLength={64}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter password"
+                    className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl pl-10 pr-10 py-2.5 text-charcoal-ink focus:outline-none focus:border-charcoal-header"
+                  />
+                  <button
+                    type="button"
+                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute right-3 top-2.5 text-charcoal-muted hover:text-charcoal-ink"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {(() => {
+                const req = checkPasswordRequirements(password, confirmPassword);
+                const items = [
+                  ['At least 8 characters', req.hasMinLength],
+                  ['At least 1 uppercase letter (A-Z)', req.hasUppercase],
+                  ['At least 1 number (0-9)', req.hasNumber],
+                  ['At least 1 special character (@, #, $, !)', req.hasSpecialChar],
+                  ['Passwords match', req.passwordsMatch],
+                ];
+                return (
+                  <div className="p-3 rounded-xl bg-charcoal-canvas border border-charcoal-border space-y-1">
+                    <div className="text-[11px] font-bold text-charcoal-ink mb-1">Password Requirements</div>
+                    {items.map(([label, ok]) => (
+                      <div key={label} className={`flex items-center gap-2 text-[11px] ${ok ? 'text-charcoal-eco font-semibold' : 'text-charcoal-muted'}`}>
+                        <CheckCircle2 className={`w-3.5 h-3.5 ${ok ? 'text-charcoal-eco' : 'text-charcoal-border'}`} />
+                        <span>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </>
+          )}
 
           <button
             type="submit"
@@ -304,7 +375,7 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
               <h3 className="font-bold text-base text-charcoal-ink">Reset Admin Password</h3>
             </div>
             <p className="text-xs text-charcoal-muted mb-4">
-              Ilagay ang registered admin email address para magpadala ng password reset link.
+              Enter your registered admin email address to receive a password reset link.
             </p>
             <form onSubmit={handlePasswordReset} className="space-y-4 text-xs">
               <input

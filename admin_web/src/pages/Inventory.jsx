@@ -32,13 +32,13 @@ export default function Inventory() {
         if (snap.exists()) {
           const val = snap.val();
           setInventory(val);
-          setEditItemName(val.itemName || 'Standard Charcoal Sack (Uling)');
+          setEditItemName(val.itemName || 'Standard Charcoal Sack');
           setEditUnit(val.unit || 'sack');
           setEditPrice(val.pricePerUnit ?? 250);
           setEditLowStockLimit(val.lowStockLimit ?? 20);
         } else {
           setInventory({
-            itemName: 'Standard Charcoal Sack (Uling)',
+            itemName: 'Standard Charcoal Sack',
             unit: 'sack',
             currentStock: 0,
             pricePerUnit: 250,
@@ -96,7 +96,7 @@ export default function Inventory() {
       const invRef = ref(db, 'inventory');
       const txResult = await runTransaction(invRef, (current) => {
         const base = current || {
-          itemName: 'Standard Charcoal Sack (Uling)',
+          itemName: 'Standard Charcoal Sack',
           unit: 'sack',
           pricePerUnit: 250,
           lowStockLimit: 20,
@@ -192,8 +192,8 @@ export default function Inventory() {
       {/* Title & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-charcoal-ink tracking-tight">Charcoal (Uling) Inventory</h1>
-          <p className="text-sm text-charcoal-muted">Pamahalaan ang stock balance, presyo, pangalan ng produkto, at low-stock alert limit.</p>
+          <h1 className="text-2xl font-bold text-charcoal-ink tracking-tight">Charcoal Inventory</h1>
+          <p className="text-sm text-charcoal-muted">Manage stock balance, pricing, product name, and low-stock alert threshold.</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -274,7 +274,7 @@ export default function Inventory() {
 
         {history.length === 0 ? (
           <div className="py-12 text-center text-charcoal-muted text-sm">
-            Wala pang stock adjustments.
+            No stock adjustments recorded yet.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -334,7 +334,7 @@ export default function Inventory() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white border border-charcoal-border rounded-2xl p-6 w-full max-w-md shadow-2xl text-charcoal-ink">
             <h3 className="font-bold text-lg text-charcoal-ink mb-1">Restock Charcoal</h3>
-            <p className="text-xs text-charcoal-muted mb-4">Atomic transaction restock ng imbentaryo.</p>
+            <p className="text-xs text-charcoal-muted mb-4">Atomic transaction inventory restock.</p>
             <form onSubmit={handleRestock} className="space-y-4 text-xs">
               {modalError && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2 text-rose-700">
@@ -392,7 +392,7 @@ export default function Inventory() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white border border-charcoal-border rounded-2xl p-6 w-full max-w-md shadow-2xl text-charcoal-ink">
             <h3 className="font-bold text-lg text-charcoal-ink mb-1">Edit Product &amp; Pricing</h3>
-            <p className="text-xs text-charcoal-muted mb-4">I-update ang pangalan ng uling, unit, presyo, at low-stock alert.</p>
+            <p className="text-xs text-charcoal-muted mb-4">Update the charcoal product name, unit, price, and low-stock alert threshold.</p>
             <form onSubmit={handleUpdateProduct} className="space-y-4 text-xs">
               {modalError && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2 text-rose-700">

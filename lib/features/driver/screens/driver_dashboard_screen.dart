@@ -70,7 +70,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           SnackBar(
             backgroundColor: AppTheme.headerForest,
             content: Text(
-              'Bagong delivery assignment: ${newlyAdded.join(', ')}',
+              'New delivery assignment: ${newlyAdded.join(', ')}',
             ),
           ),
         );
@@ -91,7 +91,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Kailangan naka-on ang GPS at Location permission para mag-broadcast.',
+              'GPS and Location permission are required to broadcast live location.',
             ),
           ),
         );
@@ -123,7 +123,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Hindi ma-start ang delivery: ${e.toString().replaceAll('Exception: ', '')}',
+              'Unable to start delivery: ${e.toString().replaceAll('Exception: ', '')}',
             ),
           ),
         );
@@ -150,8 +150,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
         ),
         content: Text(
           isCod
-              ? 'I-mark as Delivered ang Order ${order.id}?\n\nSiguraduhing nakolekta ang ₱${order.totalAmount.toStringAsFixed(2)} (COD) mula kay ${order.customerName}.'
-              : 'I-mark as Delivered ang Order ${order.id}?\n\nPaid via Online QR (${order.paymentStatus}).',
+              ? 'Mark Order ${order.id} as Delivered?\n\nEnsure ₱${order.totalAmount.toStringAsFixed(2)} (COD) is collected from ${order.customerName}.'
+              : 'Mark Order ${order.id} as Delivered?\n\nPaid via Online QR (${order.paymentStatus}).',
           style: const TextStyle(color: AppTheme.mutedSlate),
         ),
         actions: [
@@ -189,7 +189,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hindi na-update ang delivery: $e')),
+          SnackBar(content: Text('Unable to update delivery: $e')),
         );
       }
     } finally {
@@ -214,7 +214,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     }
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Walang available na navigation app.')),
+        const SnackBar(content: Text('No navigation app available.')),
       );
     }
   }
@@ -227,7 +227,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       await launchUrl(uri);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hindi ma-dial ang $phone')),
+        SnackBar(content: Text('Unable to dial $phone')),
       );
     }
   }
@@ -332,7 +332,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     child: Padding(
                       padding: EdgeInsets.all(24.0),
                       child: Text(
-                        'Hindi ma-load ang mga delivery assignments. Paki-check ang internet.',
+                        'Unable to load delivery assignments. Please check your internet connection.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppTheme.mutedSlate),
                       ),
@@ -386,7 +386,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                '$_newAssignmentCount bagong order assignment ang dumating!',
+                                '$_newAssignmentCount new order assignment(s) received!',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
@@ -611,8 +611,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             const SizedBox(height: 16),
             Text(
               isActiveTab
-                  ? 'Walang active delivery sa iyo ngayon.'
-                  : 'Wala pang completed deliveries.',
+                  ? 'No active deliveries assigned to you right now.'
+                  : 'No completed deliveries yet.',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppTheme.inkCharcoal,
@@ -623,8 +623,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             const SizedBox(height: 6),
             Text(
               isActiveTab
-                  ? 'Maghintay na mag-assign ang Admin ng customer order mula sa Admin Web Dashboard.'
-                  : 'Makikita dito ang mga natapos mong deliveries.',
+                  ? 'Wait for the Admin to assign a customer order from the Admin Web Dashboard.'
+                  : 'Completed deliveries will appear here.',
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppTheme.mutedSlate, fontSize: 12),
             ),
@@ -726,11 +726,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Kargang Uling:',
+                      'Cargo:',
                       style: TextStyle(color: AppTheme.mutedSlate, fontSize: 11),
                     ),
                     Text(
-                      '${order.sacksOrdered} Sako',
+                      '${order.sacksOrdered} ${order.sacksOrdered == 1 ? 'Sack' : 'Sacks'}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppTheme.inkCharcoal,
@@ -745,7 +745,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     Text(
                       isOnline
                           ? 'Online QR (${order.paymentStatus}):'
-                          : 'Sisingilin (COD):',
+                          : 'Collect (COD):',
                       style: const TextStyle(
                         color: AppTheme.mutedSlate,
                         fontSize: 11,

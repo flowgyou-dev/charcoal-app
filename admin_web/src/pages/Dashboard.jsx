@@ -24,7 +24,7 @@ export default function Dashboard({ setActiveTab }) {
           setStock(snap.val());
         } else {
           const initialInv = {
-            itemName: 'Standard Charcoal Sack (Uling)',
+            itemName: 'Standard Charcoal Sack',
             pricePerUnit: 250,
             currentStock: 120,
             lowStockLimit: 20,
@@ -104,7 +104,7 @@ export default function Dashboard({ setActiveTab }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-charcoal-ink tracking-tight">Executive Dashboard</h1>
-          <p className="text-sm text-charcoal-muted">Real-time status ng Charcoal Sales, Inventory, at Deliveries.</p>
+          <p className="text-sm text-charcoal-muted">Real-time overview of Charcoal Sales, Inventory, and Deliveries.</p>
         </div>
         <div className="flex items-center gap-2">
           <span
@@ -127,7 +127,7 @@ export default function Dashboard({ setActiveTab }) {
             <div>
               <p className="font-bold text-sm">Low Stock Alert!</p>
               <p className="text-xs text-amber-800">
-                May {currentStock} {unitLabel}(s) na lang ng uling na natitira. Mag-restock na bago maubusan.
+                Only {currentStock} {unitLabel}(s) remaining in stock. Restock before running out.
               </p>
             </div>
           </div>
@@ -144,7 +144,7 @@ export default function Dashboard({ setActiveTab }) {
         <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center justify-between text-indigo-900 shadow-sm">
           <div className="text-xs">
             <span className="font-bold text-sm block">Online Payment Receipts Awaiting Verification</span>
-            May {pendingVerificationCount} order(s) na gumamit ng Online QR Payment na naghihintay ng inspection.
+            {pendingVerificationCount} order(s) paid via Online QR Payment are awaiting inspection.
           </div>
           <button
             onClick={() => setActiveTab('orders')}
@@ -239,7 +239,7 @@ export default function Dashboard({ setActiveTab }) {
           <div className="py-12 text-center text-charcoal-muted text-sm">Loading orders stream...</div>
         ) : orders.length === 0 ? (
           <div className="py-12 text-center text-charcoal-muted text-sm">
-            Wala pang orders sa database. Maglagay ng order sa Mobile app para makita ito rito live!
+            No orders in the database yet. Place an order in the Mobile app to see it here live!
           </div>
         ) : (
           <div className="overflow-x-auto">

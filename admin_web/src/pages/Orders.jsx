@@ -280,7 +280,7 @@ export default function Orders() {
       <div className="bg-white border border-charcoal-border rounded-2xl shadow-sm overflow-hidden">
         {filteredOrders.length === 0 ? (
           <div className="py-16 text-center text-charcoal-muted text-sm">
-            Walang orders sa kasalukuyang filter.
+            No orders match the current filter.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -545,7 +545,7 @@ export default function Orders() {
           <div className="bg-white border border-charcoal-border rounded-2xl p-6 w-full max-w-md shadow-2xl text-charcoal-ink">
             <h3 className="font-bold text-base mb-1">Cancel Order {cancelTargetOrder.id}?</h3>
             <p className="text-xs text-charcoal-muted mb-4">
-              Ibabalik nito ang {cancelTargetOrder.sacksOrdered} sako sa Inventory at ire-release ang receipt reference number kung online payment.
+              This will return {cancelTargetOrder.sacksOrdered} sack(s) to Inventory and release the receipt reference number if paid online.
             </p>
             <div className="text-xs mb-4">
               <label className="block font-semibold mb-1">Reason for cancellation</label>

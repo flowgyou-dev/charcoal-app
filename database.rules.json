@@ -13,7 +13,7 @@
       "$uid": {
         ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
         ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin' && !(auth.uid === $uid && !newData.exists())) || (auth.uid === $uid && (!newData.exists() || ((newData.child('role').val() === 'customer' || (!root.child('admins_initialized').exists() && newData.child('role').val() === 'admin')) && (!data.exists() || newData.child('role').val() === data.child('role').val()) && (!newData.child('isActive').exists() || newData.child('isActive').val() === true)))))",
-        ".validate": "!newData.exists() || (newData.hasChildren(['email', 'name', 'role']) && newData.child('email').isString() && newData.child('email').val().length <= 100 && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 60 && (newData.child('role').val() === 'customer' || newData.child('role').val() === 'driver' || newData.child('role').val() === 'admin') && (!newData.child('isActive').exists() || newData.child('isActive').isBoolean()))"
+        ".validate": "!newData.exists() || (newData.hasChildren(['email', 'name', 'role']) && newData.child('email').isString() && newData.child('email').val().length <= 100 && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 120 && (newData.child('role').val() === 'customer' || newData.child('role').val() === 'driver' || newData.child('role').val() === 'admin') && (!newData.child('isActive').exists() || newData.child('isActive').isBoolean()))"
       }
     },
     "drivers": {

@@ -177,7 +177,7 @@ export default function App() {
 
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
-    { id: 'inventory', name: 'Uling Inventory', icon: Package },
+    { id: 'inventory', name: 'Charcoal Inventory', icon: Package },
     { id: 'orders', name: 'Orders & Dispatch', icon: ShoppingCart },
     { id: 'drivers', name: 'Manage Drivers', icon: Users },
     { id: 'map', name: 'Live Delivery Map', icon: MapPin },

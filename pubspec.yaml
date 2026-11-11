@@ -34,6 +34,7 @@ flutter:
 
   assets:
     - assets/images/charcoal_icon.png
+    - assets/data/recognized-email-domains.json
 
 flutter_launcher_icons:
   android: true

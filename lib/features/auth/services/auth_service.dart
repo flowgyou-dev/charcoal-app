@@ -66,15 +66,39 @@ class AuthService {
     return null;
   }
 
+  /// Loads current user's stored name components (firstName, middleName, lastName) if available.
+  Future<Map<String, String>> getUserNameParts(String uid) async {
+    final snap = await _database.ref('${AppConstants.dbUsers}/$uid').get();
+    if (snap.exists && snap.value is Map) {
+      final map = snap.value as Map<dynamic, dynamic>;
+      return {
+        'firstName': map['firstName']?.toString() ?? '',
+        'middleName': map['middleName']?.toString() ?? '',
+        'lastName': map['lastName']?.toString() ?? '',
+      };
+    }
+    return const {'firstName': '', 'middleName': '', 'lastName': ''};
+  }
+
   // 1. Customer Registration
   Future<AppUser> registerCustomer({
-    required String name,
+    required String firstName,
+    String middleName = '',
+    required String lastName,
     required String phone,
     required String email,
     required String password,
+    bool emailVerified = false,
   }) async {
     final cleanEmail = email.trim().toLowerCase();
-    final cleanName = Validators.sanitizeText(name);
+    final cleanFirst = Validators.sanitizeText(firstName);
+    final cleanMiddle = Validators.sanitizeText(middleName);
+    final cleanLast = Validators.sanitizeText(lastName);
+    final cleanName = Validators.composeFullName(
+      firstName: cleanFirst,
+      middleName: cleanMiddle,
+      lastName: cleanLast,
+    );
     final cleanPhone = phone.replaceAll(RegExp(r'[\s\-()]'), '').trim();
 
     final cred = await _auth.createUserWithEmailAndPassword(
@@ -87,9 +111,13 @@ class AuthService {
       uid: user.uid,
       email: cleanEmail,
       name: cleanName,
+      firstName: cleanFirst,
+      middleName: cleanMiddle,
+      lastName: cleanLast,
       phone: cleanPhone,
       role: 'customer',
       isActive: true,
+      emailVerified: emailVerified,
       createdAt: DateTime.now().toIso8601String(),
     );
 
@@ -118,17 +146,19 @@ class AuthService {
     final snap = await _database.ref('${AppConstants.dbUsers}/${cred.user!.uid}').get();
     if (!snap.exists || snap.value is! Map) {
       await _auth.signOut();
-      throw Exception('Hindi makita ang Customer profile sa database. Mag-register muli o makipag-ugnayan sa Admin.');
+      throw Exception(
+        'Customer profile not found in the database. Please register again or contact Admin.',
+      );
     }
 
     final appUser = AppUser.fromMap(cred.user!.uid, snap.value as Map<dynamic, dynamic>);
     if (appUser.role != 'customer') {
       await _auth.signOut();
-      throw Exception('Ang account na ito ay hindi Customer account. Gamitin ang tamang portal.');
+      throw Exception('This account is not a Customer account. Please use the correct portal.');
     }
     if (!appUser.isActive) {
       await _auth.signOut();
-      throw Exception('Ang account na ito ay naka-deactivate. Makipag-ugnayan sa Admin.');
+      throw Exception('This account has been deactivated. Please contact Admin.');
     }
     return appUser;
   }
@@ -149,7 +179,7 @@ class AuthService {
 
     if (!driverSnap.exists || !userSnap.exists || driverSnap.value is! Map || userSnap.value is! Map) {
       await _auth.signOut();
-      throw Exception('Hindi verified na Driver account ito. Makipag-ugnayan sa Admin.');
+      throw Exception('This account is not a verified Driver account. Please contact Admin.');
     }
 
     final userMap = userSnap.value as Map<dynamic, dynamic>;
@@ -157,10 +187,9 @@ class AuthService {
     final userActive = userMap['isActive'] != false;
 
     final driverProfile = DriverProfile.fromMap(uid, driverSnap.value as Map<dynamic, dynamic>);
-
     if (role != 'driver' || !userActive || !driverProfile.isActive) {
       await _auth.signOut();
-      throw Exception('Ang Driver account na ito ay naka-deactivate o walang access.');
+      throw Exception('This Driver account has been deactivated or lacks portal access.');
     }
 
     return driverProfile;
@@ -174,11 +203,20 @@ class AuthService {
   // 5. Update Profile Name & Phone
   Future<void> updateProfile({
     required String uid,
-    required String name,
+    required String firstName,
+    String middleName = '',
+    required String lastName,
     required String phone,
     bool isDriver = false,
   }) async {
-    final cleanName = Validators.sanitizeText(name);
+    final cleanFirst = Validators.sanitizeText(firstName);
+    final cleanMiddle = Validators.sanitizeText(middleName);
+    final cleanLast = Validators.sanitizeText(lastName);
+    final cleanName = Validators.composeFullName(
+      firstName: cleanFirst,
+      middleName: cleanMiddle,
+      lastName: cleanLast,
+    );
     final cleanPhone = phone.replaceAll(RegExp(r'[\s\-()]'), '').trim();
     if (isDriver) {
       await _database.ref('${AppConstants.dbDrivers}/$uid').update({
@@ -190,6 +228,9 @@ class AuthService {
     } else {
       await _database.ref('${AppConstants.dbUsers}/$uid').update({
         'name': cleanName,
+        'firstName': cleanFirst,
+        'middleName': cleanMiddle,
+        'lastName': cleanLast,
         'phone': cleanPhone,
       });
     }
@@ -202,7 +243,7 @@ class AuthService {
   }) async {
     final user = _auth.currentUser;
     if (user == null || user.email == null) {
-      throw Exception('Walang aktibong user session.');
+      throw Exception('No active user session found.');
     }
     final cred = EmailAuthProvider.credential(
       email: user.email!,
@@ -219,7 +260,7 @@ class AuthService {
   }) async {
     final user = _auth.currentUser;
     if (user == null || user.email == null) {
-      throw Exception('Walang aktibong user session.');
+      throw Exception('No active user session found.');
     }
 
     final cred = EmailAuthProvider.credential(

@@ -208,7 +208,7 @@ export default function Settings() {
       <div>
         <h1 className="text-2xl font-bold text-charcoal-ink tracking-tight">Shop, Delivery &amp; Payment Settings</h1>
         <p className="text-sm text-charcoal-muted">
-          I-set ang totoong Warehouse Pin sa mapa, Delivery Fee rules, at Online Payment QR Code para sa customer mobile app.
+          Configure your live Warehouse Pin on the map, Delivery Fee rules, and Online Payment QR Code for the customer mobile app.
         </p>
       </div>
 
@@ -234,7 +234,7 @@ export default function Settings() {
               <MapPin className="w-5 h-5 text-charcoal-header" />
               <div>
                 <h2 className="font-bold text-sm text-charcoal-ink">Warehouse / Hub Location</h2>
-                <p className="text-[11px] text-charcoal-muted">I-click ang mapa o mag-search para ituro ang dispatch hub.</p>
+                <p className="text-[11px] text-charcoal-muted">Click the map or search to set the dispatch hub.</p>
               </div>
             </div>
 
@@ -351,7 +351,7 @@ export default function Settings() {
                 <Truck className="w-5 h-5 text-charcoal-eco" />
                 <div>
                   <h2 className="font-bold text-sm text-charcoal-ink">Delivery Fee Computation</h2>
-                  <p className="text-[11px] text-charcoal-muted">Piliin kung Free/Flat rate o Distance-based (₱/km) sa checkout.</p>
+                  <p className="text-[11px] text-charcoal-muted">Choose Flat/Free rate or Distance-based (₱/km) pricing at checkout.</p>
                 </div>
               </div>
 
@@ -366,7 +366,7 @@ export default function Settings() {
                   }`}
                 >
                   <div>Flat / Free Rate</div>
-                  <div className="text-[11px] font-normal mt-0.5">Parehong fee sa lahat ng lugar</div>
+                  <div className="text-[11px] font-normal mt-0.5">Same fee across all locations</div>
                 </button>
                 <button
                   type="button"
@@ -378,14 +378,14 @@ export default function Settings() {
                   }`}
                 >
                   <div>Distance-Based (₱/km)</div>
-                  <div className="text-[11px] font-normal mt-0.5">Base fee + per km mula Hub</div>
+                  <div className="text-[11px] font-normal mt-0.5">Base fee + per km from Hub</div>
                 </button>
               </div>
 
               {form.deliveryFeeMode === 'flat' ? (
                 <div className="text-xs">
                   <label className="block font-semibold text-charcoal-ink mb-1">
-                    Flat Delivery Fee (₱) — ilagay ang <span className="font-mono">0</span> para Free Delivery
+                    Flat Delivery Fee (₱) — enter <span className="font-mono">0</span> for Free Delivery
                   </label>
                   <input
                     type="number"
@@ -433,7 +433,7 @@ export default function Settings() {
                 <QrCode className="w-5 h-5 text-charcoal-header" />
                 <div>
                   <h2 className="font-bold text-sm text-charcoal-ink">Online Payment QR Code (GCash / Maya / QRPH)</h2>
-                  <p className="text-[11px] text-charcoal-muted">Makikita at mai-scan ito ng customer kapag pinili ang Online Payment.</p>
+                  <p className="text-[11px] text-charcoal-muted">Customers will view and scan this QR code when selecting Online Payment.</p>
                 </div>
               </div>
 
@@ -445,7 +445,7 @@ export default function Settings() {
                     maxLength={80}
                     value={form.paymentAccountName || ''}
                     onChange={(e) => setForm({ ...form, paymentAccountName: e.target.value })}
-                    placeholder="Hal. GCash - Charcoal Express"
+                    placeholder="e.g. GCash - Charcoal Express"
                     className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2 text-charcoal-ink focus:outline-none focus:border-charcoal-header"
                   />
                 </div>
@@ -456,7 +456,7 @@ export default function Settings() {
                     maxLength={40}
                     value={form.paymentAccountNumber || ''}
                     onChange={(e) => setForm({ ...form, paymentAccountNumber: e.target.value })}
-                    placeholder="Hal. 0917 123 4567"
+                    placeholder="e.g. 0917 123 4567"
                     className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2 font-mono text-charcoal-ink focus:outline-none focus:border-charcoal-header"
                   />
                 </div>
@@ -497,7 +497,7 @@ export default function Settings() {
                     />
                   </label>
                   <p className="text-[11px] text-charcoal-muted">
-                    Awtomatikong iko-compress ang QR picture para bumukas nang mabilis sa mobile app at hindi kailanganin ng paid storage.
+                    The QR image is automatically compressed so it loads fast on the mobile app without requiring paid storage.
                   </p>
                 </div>
               </div>

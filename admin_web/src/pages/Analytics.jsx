@@ -166,7 +166,7 @@ export default function Analytics() {
   const handleExportCSV = () => {
     setNotice('');
     if (allInRange.length === 0) {
-      setNotice('Walang orders sa napiling date range para i-export.');
+      setNotice('No orders in the selected date range to export.');
       return;
     }
 
@@ -224,7 +224,7 @@ export default function Analytics() {
         <div>
           <h1 className="text-2xl font-bold text-charcoal-ink tracking-tight">Sales Analytics &amp; Reports</h1>
           <p className="text-sm text-charcoal-muted">
-            Kita at dami ng naideliver na uling base sa totoong calendar dates (excluded ang Cancelled/unpaid).
+            Delivered revenue and sack volume based on calendar dates (excludes cancelled/unpaid orders).
           </p>
         </div>
         <button

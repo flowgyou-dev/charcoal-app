@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../auth/screens/role_select_screen.dart';
 import '../../auth/services/auth_service.dart';
+import '../../auth/widgets/password_requirements_indicator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/connection_banner.dart';
@@ -41,7 +42,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.cardWhite,
-        title: const Text('Privacy Policy', style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Privacy Policy',
+          style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.bold),
+        ),
         content: const SingleChildScrollView(
           child: Text(
             'CharCoal Hub Privacy Notice\n\n'
@@ -55,7 +59,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close', style: TextStyle(color: AppTheme.headerForest, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Close',
+              style: TextStyle(color: AppTheme.headerForest, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -66,42 +73,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = _authService.currentUser;
     if (user == null) return;
 
-    final nameCtrl = TextEditingController(text: _displayName);
+    final isDriver = widget.role == 'driver';
+    final parts = await _authService.getUserNameParts(user.uid);
+    if (!mounted) return;
+
+    String initialFirst = parts['firstName'] ?? '';
+    String initialMiddle = parts['middleName'] ?? '';
+    String initialLast = parts['lastName'] ?? '';
+    if (initialFirst.isEmpty && _displayName.trim().isNotEmpty) {
+      final tokens = _displayName.trim().split(RegExp(r'\s+'));
+      initialFirst = tokens.first;
+      if (tokens.length == 2) {
+        initialLast = tokens.last;
+      } else if (tokens.length > 2) {
+        initialMiddle = tokens.sublist(1, tokens.length - 1).join(' ');
+        initialLast = tokens.last;
+      }
+    }
+
+    final firstCtrl = TextEditingController(text: initialFirst);
+    final middleCtrl = TextEditingController(text: initialMiddle);
+    final lastCtrl = TextEditingController(text: initialLast);
     final phoneCtrl = TextEditingController(text: _displayPhone);
     String? dialogError;
-    final isDriver = widget.role == 'driver';
 
     final updated = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: AppTheme.cardWhite,
-          title: const Text('Edit Profile', style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                enabled: !isDriver,
-                decoration: InputDecoration(
-                  labelText: isDriver ? 'Name (Admin-managed)' : 'Full Name / Business',
-                  prefixIcon: const Icon(Icons.person_outline),
+          title: const Text(
+            'Edit Profile',
+            style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: firstCtrl,
+                  enabled: !isDriver,
+                  maxLength: 40,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(
+                    labelText: isDriver ? 'First Name (Admin-managed)' : 'First Name *',
+                    prefixIcon: const Icon(Icons.person_outline),
+                    counterText: '',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: phoneCtrl,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Mobile Number (09XXXXXXXXX)',
-                  prefixIcon: Icon(Icons.phone_outlined),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: middleCtrl,
+                  enabled: !isDriver,
+                  maxLength: 40,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(
+                    labelText: isDriver ? 'Middle Name (Admin-managed)' : 'Middle Name (Optional)',
+                    prefixIcon: const Icon(Icons.person_add_alt_1_outlined),
+                    counterText: '',
+                  ),
                 ),
-              ),
-              if (dialogError != null) ...[
-                const SizedBox(height: 8),
-                Text(dialogError!, style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: lastCtrl,
+                  enabled: !isDriver,
+                  maxLength: 40,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(
+                    labelText: isDriver ? 'Last Name (Admin-managed)' : 'Last Name *',
+                    prefixIcon: const Icon(Icons.badge_outlined),
+                    counterText: '',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: phoneCtrl,
+                  maxLength: 15,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Mobile Number (09XXXXXXXXX)',
+                    prefixIcon: Icon(Icons.phone_outlined),
+                    counterText: '',
+                  ),
+                ),
+                if (dialogError != null) ...[
+                  const SizedBox(height: 8),
+                  Text(dialogError!, style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+                ],
               ],
-            ],
+            ),
           ),
           actions: [
             TextButton(
@@ -111,7 +171,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ElevatedButton(
               onPressed: () async {
                 if (!isDriver) {
-                  final nameErr = Validators.validateName(nameCtrl.text);
+                  final firstErr = Validators.validateName(firstCtrl.text, label: 'First Name');
+                  final midErr = Validators.validateMiddleName(middleCtrl.text);
+                  final lastErr = Validators.validateName(lastCtrl.text, label: 'Last Name');
+                  final nameErr = firstErr ?? midErr ?? lastErr;
                   if (nameErr != null) {
                     setDialogState(() => dialogError = nameErr);
                     return;
@@ -125,13 +188,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 try {
                   await _authService.updateProfile(
                     uid: user.uid,
-                    name: nameCtrl.text,
+                    firstName: firstCtrl.text,
+                    middleName: middleCtrl.text,
+                    lastName: lastCtrl.text,
                     phone: phoneCtrl.text,
                     isDriver: isDriver,
                   );
                   if (ctx.mounted) Navigator.pop(ctx, true);
                 } catch (_) {
-                  setDialogState(() => dialogError = 'Hindi ma-save ang profile changes.');
+                  setDialogState(() => dialogError = 'Failed to save profile changes.');
                 }
               },
               child: const Text('Save'),
@@ -143,20 +208,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (updated == true && mounted) {
       setState(() {
-        if (!isDriver) _displayName = Validators.sanitizeText(nameCtrl.text);
+        if (!isDriver) {
+          _displayName = Validators.composeFullName(
+            firstName: firstCtrl.text,
+            middleName: middleCtrl.text,
+            lastName: lastCtrl.text,
+          );
+        }
         _displayPhone = phoneCtrl.text.replaceAll(RegExp(r'[\s\-()]'), '').trim();
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(backgroundColor: AppTheme.emeraldGreen, content: Text('Na-update ang iyong profile!')),
+        const SnackBar(
+          backgroundColor: AppTheme.emeraldGreen,
+          content: Text('Profile updated successfully!'),
+        ),
       );
     }
-    nameCtrl.dispose();
+    firstCtrl.dispose();
+    middleCtrl.dispose();
+    lastCtrl.dispose();
     phoneCtrl.dispose();
   }
 
   Future<void> _handleChangePassword() async {
     final currentCtrl = TextEditingController();
     final newCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    bool obscureCur = true;
+    bool obscureNew = true;
+    bool obscureConfirm = true;
     String? dialogError;
 
     final changed = await showDialog<bool>(
@@ -164,32 +244,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: AppTheme.cardWhite,
-          title: const Text('Change Password', style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: currentCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Current Password',
-                  prefixIcon: Icon(Icons.lock_outline),
+          title: const Text(
+            'Change Password',
+            style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: currentCtrl,
+                  obscureText: obscureCur,
+                  decoration: InputDecoration(
+                    labelText: 'Current Password',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureCur ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                      onPressed: () => setDialogState(() => obscureCur = !obscureCur),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: newCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'New Strong Password',
-                  prefixIcon: Icon(Icons.key_outlined),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: newCtrl,
+                  obscureText: obscureNew,
+                  onChanged: (_) => setDialogState(() {}),
+                  decoration: InputDecoration(
+                    labelText: 'New Password',
+                    prefixIcon: const Icon(Icons.key_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureNew ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                      onPressed: () => setDialogState(() => obscureNew = !obscureNew),
+                    ),
+                  ),
                 ),
-              ),
-              if (dialogError != null) ...[
-                const SizedBox(height: 8),
-                Text(dialogError!, style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: confirmCtrl,
+                  obscureText: obscureConfirm,
+                  onChanged: (_) => setDialogState(() {}),
+                  decoration: InputDecoration(
+                    labelText: 'Confirm New Password',
+                    prefixIcon: const Icon(Icons.lock_reset_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                      onPressed: () => setDialogState(() => obscureConfirm = !obscureConfirm),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                PasswordRequirementsIndicator(
+                  password: newCtrl.text,
+                  confirmPassword: confirmCtrl.text,
+                  showConfirmCheck: true,
+                ),
+                if (dialogError != null) ...[
+                  const SizedBox(height: 8),
+                  Text(dialogError!, style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+                ],
               ],
-            ],
+            ),
           ),
           actions: [
             TextButton(
@@ -200,7 +314,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onPressed: () async {
                 final curErr = Validators.validateLoginPassword(currentCtrl.text);
                 final newErr = Validators.validateStrongPassword(newCtrl.text);
-                final firstErr = curErr ?? newErr;
+                final confErr = Validators.validateConfirmPassword(newCtrl.text, confirmCtrl.text);
+                final firstErr = curErr ?? newErr ?? confErr;
                 if (firstErr != null) {
                   setDialogState(() => dialogError = firstErr);
                   return;
@@ -212,7 +327,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                   if (ctx.mounted) Navigator.pop(ctx, true);
                 } catch (_) {
-                  setDialogState(() => dialogError = 'Mali ang current password o mahina ang bagong password.');
+                  setDialogState(
+                    () => dialogError = 'Current password is incorrect or the new password does not meet security rules.',
+                  );
                 }
               },
               child: const Text('Update Password'),
@@ -224,9 +341,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     currentCtrl.dispose();
     newCtrl.dispose();
+    confirmCtrl.dispose();
     if (changed == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(backgroundColor: AppTheme.emeraldGreen, content: Text('Matagumpay na napalitan ang password!')),
+        const SnackBar(
+          backgroundColor: AppTheme.emeraldGreen,
+          content: Text('Password updated successfully!'),
+        ),
       );
     }
   }
@@ -250,6 +371,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _handleDeleteAccount() async {
     final passCtrl = TextEditingController();
+    bool obscurePass = true;
     String? dialogError;
 
     final confirmedPassword = await showDialog<String>(
@@ -257,23 +379,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: AppTheme.cardWhite,
-          title: Text('Delete Account', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold)),
+          title: Text(
+            'Delete Account',
+            style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Sigurado ka bang gusto mong burahin ang iyong account? Hindi na ito maibabalik.',
+                'Are you sure you want to delete your account? This action cannot be undone.',
                 style: TextStyle(color: AppTheme.mutedSlate, fontSize: 13),
               ),
               const SizedBox(height: 14),
               TextField(
                 controller: passCtrl,
-                obscureText: true,
+                obscureText: obscurePass,
                 style: const TextStyle(color: AppTheme.inkCharcoal),
-                decoration: const InputDecoration(
-                  labelText: 'I-type ang Password para i-confirm',
-                  prefixIcon: Icon(Icons.lock_outline),
+                decoration: InputDecoration(
+                  labelText: 'Enter Password to confirm',
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                    onPressed: () => setDialogState(() => obscurePass = !obscurePass),
+                  ),
                 ),
               ),
               if (dialogError != null) ...[
@@ -317,7 +446,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: AppTheme.emeraldGreen,
-            content: Text('Matagumpay na nabura ang iyong account.'),
+            content: Text('Your account has been permanently deleted.'),
           ),
         );
         Navigator.pushAndRemoveUntil(
@@ -331,7 +460,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.red.shade700,
-            content: const Text('Hindi nabura ang account. Pakitingnan kung tama ang password.'),
+            content: const Text('Unable to delete account. Please verify your password.'),
           ),
         );
       }
@@ -361,7 +490,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           backgroundColor: AppTheme.headerForest.withValues(alpha: 0.12),
                           child: Text(
                             _displayName.isNotEmpty ? _displayName[0].toUpperCase() : 'U',
-                            style: const TextStyle(color: AppTheme.headerForest, fontWeight: FontWeight.bold, fontSize: 20),
+                            style: const TextStyle(
+                              color: AppTheme.headerForest,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 14),
@@ -369,12 +502,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(_displayName, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppTheme.inkCharcoal)),
+                              Text(
+                                _displayName,
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.inkCharcoal,
+                                ),
+                              ),
                               const SizedBox(height: 2),
-                              Text(widget.email, style: const TextStyle(fontSize: 12, color: AppTheme.mutedSlate)),
+                              Text(
+                                widget.email,
+                                style: const TextStyle(fontSize: 12, color: AppTheme.mutedSlate),
+                              ),
                               if (_displayPhone.isNotEmpty) ...[
                                 const SizedBox(height: 2),
-                                Text(_displayPhone, style: const TextStyle(fontSize: 12, color: AppTheme.emeraldGreen, fontWeight: FontWeight.w600)),
+                                Text(
+                                  _displayPhone,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.emeraldGreen,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ],
                             ],
                           ),
@@ -396,7 +546,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: Text(
                         'Role: ${widget.role.toUpperCase()}',
-                        style: const TextStyle(color: AppTheme.emeraldGreen, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: AppTheme.emeraldGreen,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -409,31 +563,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   ListTile(
                     leading: const Icon(Icons.key_outlined, color: AppTheme.headerForest),
-                    title: const Text('Change Password', style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Magpalit ng bagong password.', style: TextStyle(color: AppTheme.mutedSlate, fontSize: 12)),
+                    title: const Text(
+                      'Change Password',
+                      style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: const Text(
+                      'Update your account password.',
+                      style: TextStyle(color: AppTheme.mutedSlate, fontSize: 12),
+                    ),
                     trailing: const Icon(Icons.chevron_right, color: AppTheme.mutedSlate),
                     onTap: _isProcessing ? null : _handleChangePassword,
                   ),
                   const Divider(height: 1, color: AppTheme.surfaceBorder),
                   ListTile(
                     leading: const Icon(Icons.privacy_tip_outlined, color: AppTheme.headerForest),
-                    title: const Text('Privacy Policy', style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Basahin kung paano pinoprotektahan ang iyong data.', style: TextStyle(color: AppTheme.mutedSlate, fontSize: 12)),
+                    title: const Text(
+                      'Privacy Policy',
+                      style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: const Text(
+                      'Read how your personal data is protected.',
+                      style: TextStyle(color: AppTheme.mutedSlate, fontSize: 12),
+                    ),
                     trailing: const Icon(Icons.chevron_right, color: AppTheme.mutedSlate),
                     onTap: _showPrivacyPolicy,
                   ),
                   const Divider(height: 1, color: AppTheme.surfaceBorder),
                   ListTile(
                     leading: const Icon(Icons.logout, color: AppTheme.inkCharcoal),
-                    title: const Text('Sign Out', style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.w600)),
+                    title: const Text(
+                      'Sign Out',
+                      style: TextStyle(color: AppTheme.inkCharcoal, fontWeight: FontWeight.w600),
+                    ),
                     onTap: _isProcessing ? null : _handleSignOut,
                   ),
                   if (widget.role == 'customer') ...[
                     const Divider(height: 1, color: AppTheme.surfaceBorder),
                     ListTile(
                       leading: Icon(Icons.delete_forever_outlined, color: Colors.red.shade700),
-                      title: Text('Delete Account', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.w600)),
-                      subtitle: const Text('Permanenteng burahin ang iyong account at profile data.', style: TextStyle(color: AppTheme.mutedSlate, fontSize: 12)),
+                      title: Text(
+                        'Delete Account',
+                        style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: const Text(
+                        'Permanently delete your account and profile data.',
+                        style: TextStyle(color: AppTheme.mutedSlate, fontSize: 12),
+                      ),
                       onTap: _isProcessing ? null : _handleDeleteAccount,
                     ),
                   ],

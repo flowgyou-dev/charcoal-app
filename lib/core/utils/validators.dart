@@ -1,3 +1,32 @@
+import 'email_domain_validator.dart';
+
+class PasswordRequirementStatus {
+  final bool hasMinLength;
+  final bool hasMaxLength;
+  final bool hasUppercase;
+  final bool hasNumber;
+  final bool hasSpecialChar;
+  final bool passwordsMatch;
+
+  const PasswordRequirementStatus({
+    required this.hasMinLength,
+    required this.hasMaxLength,
+    required this.hasUppercase,
+    required this.hasNumber,
+    required this.hasSpecialChar,
+    required this.passwordsMatch,
+  });
+
+  bool get allMet =>
+      hasMinLength &&
+      hasMaxLength &&
+      hasUppercase &&
+      hasNumber &&
+      hasSpecialChar;
+
+  bool get allMetWithConfirm => allMet && passwordsMatch;
+}
+
 class Validators {
   static final RegExp _emailRegex = RegExp(
     r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
@@ -9,21 +38,45 @@ class Validators {
 
   static final RegExp _htmlTagOrControlRegex = RegExp(r'''[<>"']|[\x00-\x1F\x7F]''');
 
+  static final RegExp _specialCharRegex = RegExp(r'''[!@#\$%^&*(),.?":{}|<>\-_+=~`]''');
+
   /// Removes leading/trailing spaces and strips HTML/script characters.
   static String sanitizeText(String input) {
     return input.trim().replaceAll(_htmlTagOrControlRegex, '');
   }
 
-  static String? validateName(String? value, {String label = 'Pangalan'}) {
+  static String composeFullName({
+    required String firstName,
+    String middleName = '',
+    required String lastName,
+  }) {
+    final parts = [
+      sanitizeText(firstName),
+      sanitizeText(middleName),
+      sanitizeText(lastName),
+    ].where((p) => p.isNotEmpty).toList();
+    return parts.join(' ');
+  }
+
+  static String? validateName(String? value, {String label = 'Name'}) {
     final clean = sanitizeText(value ?? '');
     if (clean.isEmpty) {
-      return 'Kailangan ilagay ang $label.';
+      return 'Please enter $label.';
     }
     if (clean.length < 2) {
-      return 'Ang $label ay dapat hindi bababa sa 2 characters.';
+      return '$label must be at least 2 characters.';
     }
     if (clean.length > 60) {
-      return 'Ang $label ay hanggang 60 characters lamang.';
+      return '$label cannot exceed 60 characters.';
+    }
+    return null;
+  }
+
+  static String? validateMiddleName(String? value) {
+    final clean = sanitizeText(value ?? '');
+    if (clean.isEmpty) return null; // Optional
+    if (clean.length > 60) {
+      return 'Middle Name cannot exceed 60 characters.';
     }
     return null;
   }
@@ -31,47 +84,75 @@ class Validators {
   static String? validateEmail(String? value) {
     final clean = (value ?? '').trim();
     if (clean.isEmpty) {
-      return 'Kailangan ilagay ang Email Address.';
+      return 'Please enter your Email Address.';
     }
     if (clean.length > 100) {
-      return 'Masyadong mahaba ang Email Address (max 100 characters).';
+      return 'Email Address is too long (max 100 characters).';
     }
     if (!_emailRegex.hasMatch(clean)) {
-      return 'Hindi valid ang format ng Email Address.';
+      return 'Please enter a valid Email Address format.';
     }
-    return null;
+    return EmailDomainValidator.validateDomain(clean);
   }
 
   static String? validatePhPhone(String? value) {
     final clean = (value ?? '').replaceAll(RegExp(r'[\s\-()]'), '').trim();
     if (clean.isEmpty) {
-      return 'Kailangan ilagay ang Mobile Number.';
+      return 'Please enter your Mobile Number.';
     }
     if (!_phPhoneRegex.hasMatch(clean)) {
-      return 'Gamitin ang valid PH mobile format (hal. 09171234567 o +639171234567).';
+      return 'Use a valid PH mobile number (e.g. 09171234567 or +639171234567).';
     }
     return null;
+  }
+
+  static PasswordRequirementStatus checkPasswordRequirements(
+    String password, {
+    String? confirmPassword,
+  }) {
+    return PasswordRequirementStatus(
+      hasMinLength: password.length >= 8,
+      hasMaxLength: password.length <= 64,
+      hasUppercase: RegExp(r'[A-Z]').hasMatch(password),
+      hasNumber: RegExp(r'[0-9]').hasMatch(password),
+      hasSpecialChar: _specialCharRegex.hasMatch(password),
+      passwordsMatch: confirmPassword != null &&
+          password.isNotEmpty &&
+          password == confirmPassword,
+    );
   }
 
   static String? validateStrongPassword(String? value) {
     final pass = value ?? '';
     if (pass.isEmpty) {
-      return 'Kailangan ilagay ang Password.';
+      return 'Please enter a Password.';
     }
     if (pass.length < 8) {
-      return 'Ang Password ay dapat hindi bababa sa 8 characters.';
+      return 'Password must be at least 8 characters.';
     }
     if (pass.length > 64) {
-      return 'Ang Password ay hanggang 64 characters lamang.';
+      return 'Password cannot exceed 64 characters.';
     }
     if (!RegExp(r'[A-Z]').hasMatch(pass)) {
-      return 'Maglagay ng kahit isang malaking letra (A-Z) sa password.';
+      return 'Password must include at least 1 uppercase letter (A-Z).';
     }
     if (!RegExp(r'[0-9]').hasMatch(pass)) {
-      return 'Maglagay ng kahit isang numero (0-9) sa password.';
+      return 'Password must include at least 1 number (0-9).';
     }
-    if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>\-_+=~`]').hasMatch(pass)) {
-      return 'Maglagay ng kahit isang symbol (hal. @, #, \$, !) sa password.';
+    if (!_specialCharRegex.hasMatch(pass)) {
+      return 'Password must include at least 1 special character (e.g. @, #, \$, !).';
+    }
+    return null;
+  }
+
+  static String? validateConfirmPassword(String? password, String? confirmPassword) {
+    final pass = password ?? '';
+    final confirm = confirmPassword ?? '';
+    if (confirm.isEmpty) {
+      return 'Please confirm your Password.';
+    }
+    if (pass != confirm) {
+      return 'Passwords do not match.';
     }
     return null;
   }
@@ -79,10 +160,10 @@ class Validators {
   static String? validateLoginPassword(String? value) {
     final pass = value ?? '';
     if (pass.trim().isEmpty) {
-      return 'Kailangan ilagay ang Password.';
+      return 'Please enter your Password.';
     }
     if (pass.length > 64) {
-      return 'Masyadong mahaba ang Password.';
+      return 'Password is too long.';
     }
     return null;
   }
@@ -90,26 +171,26 @@ class Validators {
   static String? validateAddress(String? value) {
     final clean = sanitizeText(value ?? '');
     if (clean.isEmpty) {
-      return 'Kailangan ilagay ang Delivery Address.';
+      return 'Please enter your Delivery Address.';
     }
     if (clean.length < 10) {
-      return 'Paki-kumpleto ang Delivery Address (hindi bababa sa 10 characters).';
+      return 'Please complete your Delivery Address (at least 10 characters).';
     }
     if (clean.length > 200) {
-      return 'Ang Delivery Address ay hanggang 200 characters lamang.';
+      return 'Delivery Address cannot exceed 200 characters.';
     }
     return null;
   }
 
   static String? validateOrderQuantity(int quantity, int currentStock) {
     if (currentStock <= 0) {
-      return 'Out of stock ang uling sa ngayon.';
+      return 'Charcoal is currently out of stock.';
     }
     if (quantity < 1) {
-      return 'Hindi bababa sa 1 sako ang pwedeng i-order.';
+      return 'Minimum order quantity is 1 sack.';
     }
     if (quantity > currentStock) {
-      return 'Paumanhin, $currentStock sako na lang ang natitira sa stock.';
+      return 'Sorry, only $currentStock sack(s) remaining in stock.';
     }
     return null;
   }

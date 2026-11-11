@@ -23,28 +23,28 @@ class OrderService {
     ReceiptScanResult? scannedReceipt,
   }) async {
     if (sacksOrdered < 1 || sacksOrdered > 1000) {
-      throw Exception('Bilang ng sako ay dapat 1 hanggang 1000.');
+      throw Exception('Order quantity must be between 1 and 1000.');
     }
 
     final cleanAddress = Validators.sanitizeText(deliveryAddress);
     if (cleanAddress.length < 10) {
-      throw Exception('Pakikumpleto ang Delivery Address.');
+      throw Exception('Please complete your Delivery Address (at least 10 characters).');
     }
 
     final isOnline = paymentMethod == 'ONLINE_QR';
     String? refKey;
     if (isOnline) {
       if (scannedReceipt == null || scannedReceipt.refNumber.isEmpty) {
-        throw Exception('Kailangan mag-upload at ma-scan ng OCR ang payment receipt.');
+        throw Exception('Please upload and scan your payment receipt via OCR.');
       }
       refKey = ReceiptOcrParser.normalizeRefKey(scannedReceipt.refNumber);
       if (refKey.length < 4) {
-        throw Exception('Hindi valid ang OCR Reference Number.');
+        throw Exception('Invalid OCR Reference Number.');
       }
       final dupSnap = await _database.ref('${AppConstants.dbUsedReceiptRefs}/$refKey').get();
       if (dupSnap.exists) {
         throw Exception(
-          'Nagamit na ang Reference Number na ito (${scannedReceipt.refNumber}) sa ibang order. Mag-upload ng bagong resibo.',
+          'This Reference Number (${scannedReceipt.refNumber}) has already been used on another order. Please upload a new receipt.',
         );
       }
     }
@@ -52,12 +52,12 @@ class OrderService {
     // 1. Fetch authoritative price & delivery settings from RTDB
     final invSnap = await _database.ref(AppConstants.dbInventory).get();
     if (!invSnap.exists || invSnap.value is! Map) {
-      throw Exception('Hindi makita ang Charcoal Inventory sa database.');
+      throw Exception('Charcoal Inventory record not found in database.');
     }
     final invMap = invSnap.value as Map<dynamic, dynamic>;
     final unitPrice = double.tryParse(invMap['pricePerUnit']?.toString() ?? '') ?? 0;
     if (unitPrice <= 0) {
-      throw Exception('Invalid product unit price sa database.');
+      throw Exception('Invalid product unit price in database.');
     }
 
     final settingsSnap = await _database.ref(AppConstants.dbSettings).get();
@@ -88,10 +88,10 @@ class OrderService {
     });
 
     if (insufficientStock) {
-      throw Exception('Kulang ang stock! May $availableOnFailure sako na lang na natitira.');
+      throw Exception('Insufficient stock! Only $availableOnFailure sack(s) remaining.');
     }
     if (!txResult.committed) {
-      throw Exception('Hindi na-reserve ang stock dahil sa kasabay na order. Subukan muli.');
+      throw Exception('Could not reserve stock due to a concurrent order. Please try again.');
     }
 
     final newStock = int.tryParse(txResult.snapshot.value?.toString() ?? '0') ?? 0;
@@ -168,7 +168,7 @@ class OrderService {
     final statusSnap = await _database.ref('${AppConstants.dbOrders}/${order.id}/status').get();
     final latestStatus = statusSnap.value?.toString() ?? order.status;
     if (latestStatus != 'Pending') {
-      throw Exception('Hindi na ma-cancel ang order dahil ito ay "$latestStatus" na.');
+      throw Exception('Order can no longer be cancelled because its status is already "$latestStatus".');
     }
 
     await _database.ref('${AppConstants.dbOrders}/${order.id}').update({

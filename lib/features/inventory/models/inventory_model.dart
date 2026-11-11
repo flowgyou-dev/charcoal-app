@@ -15,7 +15,7 @@ class CharcoalInventory {
 
   factory CharcoalInventory.fromMap(Map<dynamic, dynamic> map) {
     return CharcoalInventory(
-      itemName: map['itemName']?.toString() ?? 'Standard Charcoal Sack (Uling)',
+      itemName: map['itemName']?.toString() ?? 'Standard Charcoal Sack',
       currentStock: int.tryParse(map['currentStock']?.toString() ?? '100') ?? 100,
       pricePerUnit: double.tryParse(map['pricePerUnit']?.toString() ?? '250.0') ?? 250.0,
       lowStockLimit: int.tryParse(map['lowStockLimit']?.toString() ?? '20') ?? 20,

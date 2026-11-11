@@ -29,7 +29,7 @@ class ConnectionBanner extends StatelessWidget {
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Walang internet connection. Iche-check uli kapag bumalik ang signal.',
+                        'No internet connection. Reconnecting automatically when signal returns.',
                         style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
                       ),
                     ),

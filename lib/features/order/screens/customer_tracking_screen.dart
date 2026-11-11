@@ -67,7 +67,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
       await launchUrl(uri);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hindi ma-open ang dialer para sa $phone')),
+        SnackBar(content: Text('Unable to open dialer for $phone')),
       );
     }
   }
@@ -89,7 +89,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Sigurado ka bang i-cancel ang pending order na ito? Ibabalik ang stock sa inventory.',
+              'Are you sure you want to cancel this pending order? Stock will be restored to inventory.',
               style: TextStyle(fontSize: 12, color: AppTheme.mutedSlate),
             ),
             const SizedBox(height: 12),
@@ -97,7 +97,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
               controller: reasonCtrl,
               maxLength: 120,
               decoration: const InputDecoration(
-                labelText: 'Dahilan (optional)',
+                labelText: 'Reason (optional)',
                 counterText: '',
               ),
             ),
@@ -129,7 +129,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: AppTheme.emeraldGreen,
-          content: Text('Na-cancel ang order at naibalik ang stock.'),
+          content: Text('Order cancelled and stock restored.'),
         ),
       );
     } catch (e) {
@@ -137,7 +137,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Hindi ma-cancel: ${e.toString().replaceAll('Exception: ', '')}',
+            'Unable to cancel: ${e.toString().replaceAll('Exception: ', '')}',
           ),
         ),
       );
@@ -178,7 +178,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                     child: Padding(
                       padding: EdgeInsets.all(24.0),
                       child: Text(
-                        'Hindi ma-load ang tracking updates. Paki-check ang internet connection.',
+                        'Unable to load tracking updates. Please check your internet connection.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppTheme.mutedSlate),
                       ),
@@ -239,7 +239,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${currentOrder.sacksOrdered} Sako ng Uling • ₱${currentOrder.totalAmount.toStringAsFixed(2)}',
+                      '${currentOrder.sacksOrdered} ${currentOrder.sacksOrdered == 1 ? 'Sack' : 'Sacks'} • ₱${currentOrder.totalAmount.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -336,7 +336,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                 Text(
                   currentOrder.cancelReason?.isNotEmpty == true
                       ? 'Reason: ${currentOrder.cancelReason}'
-                      : 'Ang order na ito ay na-cancel at naibalik ang stock.',
+                      : 'This order was cancelled and reserved stock has been restored.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: AppTheme.mutedSlate,
@@ -557,10 +557,10 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                   isCancelled
                       ? 'Order cancelled'
                       : (currentOrder.status == 'Delivered'
-                          ? 'Matagumpay na na-deliver!'
+                          ? 'Successfully delivered!'
                           : (currentOrder.status == 'Out for Delivery'
-                              ? 'Papunta na si Kuya Driver sa lokasyon mo.'
-                              : 'Ihahanda na ang iyong sako ng uling.')),
+                              ? 'Your driver is on the way to your location.'
+                              : 'Preparing your charcoal order.')),
                   style: const TextStyle(
                     fontSize: 11,
                     color: AppTheme.mutedSlate,

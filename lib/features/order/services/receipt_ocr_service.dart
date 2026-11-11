@@ -147,7 +147,7 @@ class ReceiptOcrService {
       final parsed = ReceiptOcrParser.parseText(recognized.text);
       if (!parsed.hasValidRef) {
         throw Exception(
-          'Hindi mabasa ng OCR ang Reference Number sa receipt. Siguraduhing malinaw at kita ang Ref No. sa screenshot at subukan muli.',
+          'OCR could not read a valid Reference Number from the receipt. Make sure the Ref No. is clearly visible and try again.',
         );
       }
 

@@ -16,4 +16,10 @@ class AppConstants {
   // Default Central Hub Manila coordinates
   static const double defaultHubLat = 14.6042;
   static const double defaultHubLng = 120.9822;
+
+  // Vercel Serverless API endpoint for 6-digit Email OTP verification
+  static const String otpApiBaseUrl = String.fromEnvironment(
+    'OTP_API_BASE_URL',
+    defaultValue: 'https://charcoal-app-one.vercel.app/api',
+  );
 }

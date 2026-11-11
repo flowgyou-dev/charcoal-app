@@ -16,6 +16,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
   final _passCtrl = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
+  bool _obscurePassword = true;
   String? _errorMessage;
 
   @override
@@ -34,13 +35,16 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: AppTheme.cardWhite,
-          title: const Text('Reset Driver Password', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.inkCharcoal)),
+          title: const Text(
+            'Reset Driver Password',
+            style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.inkCharcoal),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Ilagay ang iyong Driver email para padalhan ng reset link.',
+                'Enter your Driver email address to receive a password reset link.',
                 style: TextStyle(fontSize: 12, color: AppTheme.mutedSlate),
               ),
               const SizedBox(height: 12),
@@ -74,7 +78,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                   await _authService.sendPasswordReset(resetCtrl.text);
                   if (ctx.mounted) Navigator.pop(ctx, resetCtrl.text.trim());
                 } catch (_) {
-                  setDialogState(() => dialogErr = 'Hindi maipadala ang reset email.');
+                  setDialogState(() => dialogErr = 'Unable to send password reset email.');
                 }
               },
               child: const Text('Send Link'),
@@ -89,7 +93,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppTheme.emeraldGreen,
-          content: Text('Naipadala ang reset link sa $sentTo.'),
+          content: Text('Password reset link sent to $sentTo.'),
         ),
       );
     }
@@ -112,17 +116,15 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
     });
 
     try {
-      final driverProfile = await _authService.signInDriver(
-        email: _emailCtrl.text.trim(),
+      final profile = await _authService.signInDriver(
+        email: _emailCtrl.text,
         password: _passCtrl.text,
       );
 
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (_) => DriverDashboardScreen(driverProfile: driverProfile),
-          ),
+          MaterialPageRoute(builder: (_) => DriverDashboardScreen(driverProfile: profile)),
           (route) => false,
         );
       }
@@ -144,111 +146,144 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 12),
-              Center(
-                child: Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: AppTheme.headerForest.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(Icons.local_shipping_outlined, size: 38, color: AppTheme.headerForest),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Delivery Rider Portal',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.inkCharcoal),
-              ),
-              const SizedBox(height: 12),
-
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppTheme.emeraldGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.emeraldGreen.withValues(alpha: 0.3)),
-                ),
-                child: const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.info_outline, color: AppTheme.emeraldGreen, size: 20),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Pansin: Ang Admin lamang ang lumilikha ng Driver accounts. Mangyaring kunin ang iyong login credentials mula sa Admin.',
-                        style: TextStyle(color: AppTheme.inkCharcoal, fontSize: 12, height: 1.4),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: AppTheme.headerForest.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(
+                        Icons.local_shipping_outlined,
+                        size: 38,
+                        color: AppTheme.headerForest,
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              if (_errorMessage != null)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.red.shade200),
                   ),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(color: Colors.red.shade800, fontSize: 13),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Delivery Rider Portal',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.inkCharcoal,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 12),
 
-              TextField(
-                controller: _emailCtrl,
-                keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: AppTheme.inkCharcoal),
-                decoration: const InputDecoration(
-                  labelText: 'Driver Email Address',
-                  prefixIcon: Icon(Icons.badge_outlined),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passCtrl,
-                obscureText: true,
-                style: const TextStyle(color: AppTheme.inkCharcoal),
-                decoration: const InputDecoration(
-                  labelText: 'Assigned Password',
-                  prefixIcon: Icon(Icons.lock_outline),
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _handleForgotPassword,
-                  child: const Text(
-                    'Forgot Password?',
-                    style: TextStyle(color: AppTheme.emeraldGreen, fontWeight: FontWeight.w600, fontSize: 12),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.emeraldGreen.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppTheme.emeraldGreen.withValues(alpha: 0.3)),
+                    ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.info_outline, color: AppTheme.emeraldGreen, size: 20),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Note: Only the Admin creates Driver accounts. Please get your login credentials from your Admin.',
+                            style: TextStyle(color: AppTheme.inkCharcoal, fontSize: 12, height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 8),
 
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.headerForest),
-                onPressed: _isLoading ? null : _handleDriverLogin,
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('LOG IN AS DRIVER'),
+                  const SizedBox(height: 24),
+
+                  if (_errorMessage != null)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 18),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Text(
+                        _errorMessage!,
+                        style: TextStyle(color: Colors.red.shade800, fontSize: 13),
+                      ),
+                    ),
+
+                  TextField(
+                    controller: _emailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    style: const TextStyle(color: AppTheme.inkCharcoal),
+                    decoration: const InputDecoration(
+                      labelText: 'Driver Email Address',
+                      prefixIcon: Icon(Icons.badge_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _passCtrl,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _handleDriverLogin(),
+                    style: const TextStyle(color: AppTheme.inkCharcoal),
+                    decoration: InputDecoration(
+                      labelText: 'Assigned Password',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _handleForgotPassword,
+                      child: const Text(
+                        'Forgot Password?',
+                        style: TextStyle(
+                          color: AppTheme.emeraldGreen,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  SizedBox(
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.headerForest),
+                      onPressed: _isLoading ? null : _handleDriverLogin,
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Text('LOG IN AS DRIVER'),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

@@ -1,5 +1,48 @@
+import recognizedDomains from '../data/recognized-email-domains.json';
+
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const PH_PHONE_REGEX = /^(09\d{9}|\+639\d{9})$/;
+const SPECIAL_CHAR_REGEX = /[!@#$%^&*(),.?":{}|<>_\-+=~`]/;
+
+const EXACT_PROVIDERS = new Set([
+  ...(recognizedDomains.public_email_providers || []).map((d) => d.toLowerCase()),
+  ...(recognizedDomains.regional_and_isp_providers || []).map((d) => d.toLowerCase()),
+]);
+
+const ORG_SUFFIXES = Object.values(recognizedDomains.organization_domain_patterns || {})
+  .flat()
+  .map((pattern) => pattern.replace(/^\*/, '').toLowerCase())
+  .sort((a, b) => b.length - a.length);
+
+const BLOCKED_DOMAINS = new Set([
+  'mailinator.com',
+  'tempmail.com',
+  'temp-mail.org',
+  'guerrillamail.com',
+  '10minutemail.com',
+  'yopmail.com',
+  'trashmail.com',
+  'sharklasers.com',
+  'getnada.com',
+  'dispostable.com',
+  'fakeinbox.com',
+  'maildrop.cc',
+  'throwawaymail.com',
+  'gmai.com',
+  'gmil.com',
+  'gmaill.com',
+  'gmial.com',
+  'gnail.com',
+  'yaho.com',
+  'yahooo.com',
+  'hotmal.com',
+  'outlok.com',
+  'example.com',
+  'example.org',
+  'example.net',
+]);
+
+const BLOCKED_SUFFIXES = ['.con', '.cmo', '.invalid', '.local', '.localhost', '.test'];
 
 /**
  * Strips leading/trailing whitespace and removes angle brackets, quotes, and control chars
@@ -24,7 +67,21 @@ export function validateEmail(value) {
   if (!clean) return 'Email address is required.';
   if (clean.length > 100) return 'Email address is too long (max 100 characters).';
   if (!EMAIL_REGEX.test(clean)) return 'Please enter a valid email address.';
-  return null;
+
+  const domain = clean.split('@').pop().toLowerCase();
+  if (!domain || domain.includes('*') || domain.includes('..')) {
+    return 'Invalid email domain format.';
+  }
+  if (BLOCKED_SUFFIXES.some((s) => domain.endsWith(s)) || BLOCKED_DOMAINS.has(domain)) {
+    return `Unrecognized or disposable email domain ("${domain}").`;
+  }
+  if (EXACT_PROVIDERS.has(domain)) return null;
+  for (const suffix of ORG_SUFFIXES) {
+    if (domain.endsWith(suffix) && domain.length > suffix.length) {
+      return null;
+    }
+  }
+  return `Email domain "${domain}" is not a recognized provider or organization domain.`;
 }
 
 export function validatePhPhone(value) {
@@ -36,6 +93,17 @@ export function validatePhPhone(value) {
   return null;
 }
 
+export function checkPasswordRequirements(value, confirmValue = null) {
+  const pass = String(value || '');
+  return {
+    hasMinLength: pass.length >= 8 && pass.length <= 64,
+    hasUppercase: /[A-Z]/.test(pass),
+    hasNumber: /[0-9]/.test(pass),
+    hasSpecialChar: SPECIAL_CHAR_REGEX.test(pass),
+    passwordsMatch: confirmValue !== null && pass.length > 0 && pass === String(confirmValue),
+  };
+}
+
 export function validateStrongPassword(value) {
   const pass = String(value || '');
   if (!pass) return 'Password is required.';
@@ -43,8 +111,8 @@ export function validateStrongPassword(value) {
   if (pass.length > 64) return 'Password must be at most 64 characters.';
   if (!/[A-Z]/.test(pass)) return 'Password must contain at least 1 uppercase letter.';
   if (!/[0-9]/.test(pass)) return 'Password must contain at least 1 number.';
-  if (!/[!@#$%^&*(),.?":{}|<>_\-+=~`]/.test(pass)) {
-    return 'Password must contain at least 1 symbol (e.g. @, #, $, !).';
+  if (!SPECIAL_CHAR_REGEX.test(pass)) {
+    return 'Password must contain at least 1 special character (e.g. @, #, $, !).';
   }
   return null;
 }

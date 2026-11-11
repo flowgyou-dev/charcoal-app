@@ -54,7 +54,7 @@ class RoleSelectScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Pumili kung paano mo gustong pumasok sa application.',
+                'Choose how you want to enter the application.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -115,7 +115,7 @@ class RoleSelectScreen extends StatelessWidget {
                             ),
                             SizedBox(height: 4),
                             Text(
-                              'Bumili ng sako ng uling at i-track ang delivery.',
+                              'Order charcoal sacks and track live delivery.',
                               style: TextStyle(fontSize: 12, color: AppTheme.mutedSlate),
                             ),
                           ],
@@ -180,7 +180,7 @@ class RoleSelectScreen extends StatelessWidget {
                             ),
                             SizedBox(height: 4),
                             Text(
-                              'Para sa mga rehistradong delivery rider.',
+                              'For registered delivery riders.',
                               style: TextStyle(fontSize: 12, color: AppTheme.mutedSlate),
                             ),
                           ],
