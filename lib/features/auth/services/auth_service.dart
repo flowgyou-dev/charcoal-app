@@ -206,14 +206,49 @@ class AuthService {
     return AppUser.fromMap(refreshed.uid, snap.value as Map<dynamic, dynamic>);
   }
 
+  Future<UserCredential> _signInWithFriendlyErrors({
+    required String email,
+    required String password,
+    required bool isDriver,
+  }) async {
+    try {
+      return await _auth.signInWithEmailAndPassword(
+        email: email.trim().toLowerCase(),
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      switch (e.code) {
+        case 'invalid-credential':
+        case 'wrong-password':
+        case 'user-not-found':
+          throw Exception(
+            isDriver
+                ? 'Incorrect email or password. Please double-check the credentials provided by your Admin.'
+                : 'Incorrect email or password. Please check your credentials and try again.',
+          );
+        case 'invalid-email':
+          throw Exception('Please enter a valid email address.');
+        case 'user-disabled':
+          throw Exception('This account has been disabled. Please contact Admin.');
+        case 'too-many-requests':
+          throw Exception('Too many failed login attempts. Please wait a few minutes and try again.');
+        case 'network-request-failed':
+          throw Exception('Network error. Please check your internet connection.');
+        default:
+          throw Exception(e.message ?? 'Unable to sign in. Please try again.');
+      }
+    }
+  }
+
   // 2. Customer Sign In (with strict DB profile + active + email verified check)
   Future<AppUser> signInCustomer({
     required String email,
     required String password,
   }) async {
-    final cred = await _auth.signInWithEmailAndPassword(
-      email: email.trim().toLowerCase(),
+    final cred = await _signInWithFriendlyErrors(
+      email: email,
       password: password,
+      isDriver: false,
     );
 
     final snap = await _database.ref('${AppConstants.dbUsers}/${cred.user!.uid}').get();
@@ -259,9 +294,10 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final cred = await _auth.signInWithEmailAndPassword(
-      email: email.trim().toLowerCase(),
+    final cred = await _signInWithFriendlyErrors(
+      email: email,
       password: password,
+      isDriver: true,
     );
 
     final uid = cred.user!.uid;

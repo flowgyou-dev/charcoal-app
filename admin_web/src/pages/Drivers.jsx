@@ -41,10 +41,12 @@ export default function Drivers() {
   const [plateNumber, setPlateNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const passReqs = checkPasswordRequirements(password);
+  const passReqs = checkPasswordRequirements(password, confirmPassword);
 
   useEffect(() => {
     const unsubDrivers = onValue(
@@ -102,8 +104,13 @@ export default function Drivers() {
     const passErr = validateStrongPassword(password);
     if (passErr) return setFormError(passErr);
 
+    if (password !== confirmPassword) {
+      return setFormError('Passwords do not match.');
+    }
+
     setIsSubmitting(true);
     let secondaryApp = null;
+    let createdAuthUser = null;
     try {
       const cleanName = sanitizeText(name);
       const cleanPhone = phone.replace(/[\s\-()]/g, '').trim();
@@ -112,6 +119,7 @@ export default function Drivers() {
       secondaryApp = initializeApp(firebaseConfig, `DriverCreator-${Date.now()}`);
       const secondaryAuth = getAuth(secondaryApp);
       const cred = await createUserWithEmailAndPassword(secondaryAuth, cleanEmail, password);
+      createdAuthUser = cred.user;
       const driverUid = cred.user.uid;
 
       const payload = {
@@ -139,15 +147,26 @@ export default function Drivers() {
       });
 
       await signOut(secondaryAuth);
+      createdAuthUser = null;
 
       setName('');
       setPhone('');
       setPlateNumber('');
       setEmail('');
       setPassword('');
+      setConfirmPassword('');
+      setShowPassword(false);
+      setShowConfirmPassword(false);
       setShowCreateModal(false);
-      setPageNotice(`Driver account created for ${cleanName}.`);
+      setPageNotice(`Driver account created for ${cleanName} (${cleanEmail}).`);
     } catch (err) {
+      if (createdAuthUser) {
+        try {
+          await createdAuthUser.delete();
+        } catch {
+          // Ignore rollback cleanup errors
+        }
+      }
       if (err.code === 'auth/email-already-in-use') {
         setFormError('This driver email is already registered in Firebase Auth.');
       } else {
@@ -262,6 +281,9 @@ export default function Drivers() {
             setPlateNumber('');
             setEmail('');
             setPassword('');
+            setConfirmPassword('');
+            setShowPassword(false);
+            setShowConfirmPassword(false);
             setShowCreateModal(true);
           }}
           className="px-4 py-2.5 bg-charcoal-header hover:bg-charcoal-dark text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2 uppercase tracking-wide"
@@ -516,12 +538,35 @@ export default function Drivers() {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">Confirm Assigned Password</label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      maxLength={64}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Re-enter assigned password"
+                      className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl pl-3.5 pr-10 py-2.5 font-mono focus:outline-none focus:border-charcoal-header"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-muted hover:text-charcoal-ink"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                   <div className="mt-2 p-2.5 rounded-xl bg-charcoal-canvas border border-charcoal-border grid grid-cols-2 gap-1.5 text-[11px]">
                     {[
                       { met: passReqs.hasMinLength, label: '8–64 characters' },
                       { met: passReqs.hasUppercase, label: '1 uppercase letter' },
                       { met: passReqs.hasNumber, label: '1 number' },
                       { met: passReqs.hasSpecialChar, label: '1 special character' },
+                      { met: passReqs.passwordsMatch, label: 'Passwords match' },
                     ].map((req) => (
                       <div
                         key={req.label}

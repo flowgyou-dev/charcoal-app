@@ -97,11 +97,8 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        final msg = e.toString().replaceAll('Exception: ', '');
         setState(() {
-          _errorMessage = msg.contains('firebase_auth')
-              ? 'Invalid email or password. Please try again.'
-              : msg;
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
         });
       }
     } finally {
