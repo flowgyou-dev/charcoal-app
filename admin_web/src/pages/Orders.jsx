@@ -40,7 +40,11 @@ export default function Orders() {
       (snap) => {
         if (snap.exists()) {
           const val = snap.val();
-          const list = Object.keys(val).map((key) => ({ id: key, ...val[key] }));
+          const list = Object.keys(val).map((key) => ({
+            ...val[key],
+            id: key,
+            displayId: val[key]?.id || key,
+          }));
           list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
           setOrders(list);
         } else {
@@ -198,6 +202,7 @@ export default function Orders() {
       const q = searchQuery.trim().toLowerCase();
       const haystack = [
         ord.id,
+        ord.displayId,
         ord.customerName,
         ord.customerPhone,
         ord.deliveryAddress,
@@ -304,7 +309,9 @@ export default function Orders() {
                   return (
                     <tr key={order.id} className="hover:bg-[#F8FAFA] transition-colors">
                       <td className="p-4">
-                        <span className="font-mono font-bold text-charcoal-header text-sm">{order.id}</span>
+                        <span className="font-mono font-bold text-charcoal-header text-sm">
+                          {order.displayId || order.id}
+                        </span>
                         <p className="text-[11px] text-charcoal-muted mt-0.5 font-mono">
                           {order.createdAt ? new Date(order.createdAt).toLocaleString() : '—'}
                         </p>
