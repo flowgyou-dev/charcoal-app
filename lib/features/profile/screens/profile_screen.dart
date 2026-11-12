@@ -114,6 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   controller: firstCtrl,
                   enabled: !isDriver,
                   maxLength: 40,
+                  inputFormatters: [NameInputFormatter()],
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     labelText: isDriver ? 'First Name (Admin-managed)' : 'First Name *',
@@ -126,6 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   controller: middleCtrl,
                   enabled: !isDriver,
                   maxLength: 40,
+                  inputFormatters: [NameInputFormatter()],
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     labelText: isDriver ? 'Middle Name (Admin-managed)' : 'Middle Name (Optional)',
@@ -138,6 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   controller: lastCtrl,
                   enabled: !isDriver,
                   maxLength: 40,
+                  inputFormatters: [NameInputFormatter()],
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     labelText: isDriver ? 'Last Name (Admin-managed)' : 'Last Name *',
@@ -148,12 +151,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 10),
                 TextField(
                   controller: phoneCtrl,
-                  maxLength: 20,
-                  keyboardType: TextInputType.phone,
+                  maxLength: 12,
+                  keyboardType: TextInputType.number,
                   inputFormatters: [PhPhoneInputFormatter()],
                   decoration: const InputDecoration(
                     labelText: 'Mobile or Telephone Number',
-                    hintText: 'e.g. 09171234567 or (02) 8123-4567',
+                    hintText: 'e.g. 09171234567 or 0281234567',
                     prefixIcon: Icon(Icons.phone_outlined),
                     counterText: '',
                   ),
@@ -256,9 +259,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 TextField(
                   controller: currentCtrl,
+                  maxLength: 64,
                   obscureText: obscureCur,
                   decoration: InputDecoration(
                     labelText: 'Current Password',
+                    counterText: '',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(obscureCur ? Icons.visibility_off_outlined : Icons.visibility_outlined),
@@ -269,10 +274,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: newCtrl,
+                  maxLength: 64,
                   obscureText: obscureNew,
                   onChanged: (_) => setDialogState(() {}),
                   decoration: InputDecoration(
                     labelText: 'New Password',
+                    counterText: '',
                     prefixIcon: const Icon(Icons.key_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(obscureNew ? Icons.visibility_off_outlined : Icons.visibility_outlined),
@@ -283,10 +290,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: confirmCtrl,
+                  maxLength: 64,
                   obscureText: obscureConfirm,
                   onChanged: (_) => setDialogState(() {}),
                   decoration: InputDecoration(
                     labelText: 'Confirm New Password',
+                    counterText: '',
                     prefixIcon: const Icon(Icons.lock_reset_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined),
@@ -396,10 +405,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 14),
               TextField(
                 controller: passCtrl,
+                maxLength: 64,
                 obscureText: obscurePass,
                 style: const TextStyle(color: AppTheme.inkCharcoal),
                 decoration: InputDecoration(
                   labelText: 'Enter Password to confirm',
+                  counterText: '',
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined),

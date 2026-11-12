@@ -2,7 +2,8 @@ import recognizedDomains from '../data/recognized-email-domains.json';
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const PH_PHONE_REGEX =
-  /^(09\d{9}|\+639\d{9}|02\d{7,8}|\+632\d{7,8}|0[3-8]\d{8}|\+63[3-8]\d{8}|[78]\d{7})$/;
+  /^(?:(?:0|\+?63)9\d{9}|(?:0|\+?63)2\d{7,8}|(?:0|\+?63)[3-8]\d{8}|[78]\d{7})$/;
+const NAME_CHAR_REGEX = /^[A-Za-zÀ-ÖØ-öø-ÿÑñ\s.'-]+$/;
 const SPECIAL_CHAR_REGEX = /[!@#$%^&*(),.?":{}|<>_\-+=~`]/;
 
 const GENERIC_CATCHALL_SUFFIXES = new Set([
@@ -72,6 +73,9 @@ export function validateName(value, label = 'Name', minLen = 2, maxLen = 60) {
   if (!clean) return `${label} is required.`;
   if (clean.length < minLen) return `${label} must be at least ${minLen} characters.`;
   if (clean.length > maxLen) return `${label} must be at most ${maxLen} characters.`;
+  if (!NAME_CHAR_REGEX.test(clean)) {
+    return `${label} may only contain letters, spaces, periods, hyphens, and apostrophes.`;
+  }
   return null;
 }
 
@@ -98,10 +102,10 @@ export function validateEmail(value) {
 }
 
 export function validatePhPhone(value) {
-  const clean = String(value || '').replace(/[\s\-()]/g, '').trim();
+  const clean = String(value || '').replace(/\D/g, '');
   if (!clean) return 'Mobile or telephone number is required.';
   if (!PH_PHONE_REGEX.test(clean)) {
-    return 'Use a valid PH mobile (e.g. 09171234567) or telephone number (e.g. (02) 8123-4567).';
+    return 'Use a valid PH mobile (e.g. 09171234567) or telephone number (e.g. 0281234567).';
   }
   return null;
 }
@@ -142,6 +146,63 @@ export function validatePositivePrice(value, min = 1, max = 50000, label = 'Pric
   const num = Number(value);
   if (Number.isNaN(num) || num < min || num > max) {
     return `${label} must be between ${min} and ${max}.`;
+  }
+  return null;
+}
+
+/**
+ * Strips all non-digit characters and caps length (used for phone numbers & integer inputs).
+ */
+export function formatDigitsOnly(value = '', maxLen = 12) {
+  return String(value).replace(/\D/g, '').slice(0, maxLen);
+}
+
+/**
+ * Filters numeric input to digits and at most one decimal point with bounded decimal places.
+ */
+export function formatDecimalInput(value = '', maxDecimals = 2, maxLen = 10) {
+  const cleaned = String(value).replace(/[^0-9.]/g, '');
+  const parts = cleaned.split('.');
+  const intPart = parts[0] || '';
+  if (parts.length === 1) {
+    return intPart.slice(0, maxLen);
+  }
+  const decPart = parts.slice(1).join('').slice(0, maxDecimals);
+  return `${intPart}.${decPart}`.slice(0, maxLen);
+}
+
+/**
+ * Auto-formats Philippine LTO plate numbers:
+ * uppercase alphanumeric only, automatically inserting '-' at the first letter<->digit boundary
+ * (e.g., abc1234 -> ABC-1234, 7821ab -> 7821-AB, ab12345 -> AB-12345).
+ */
+export function formatPlateNumber(value = '') {
+  const raw = String(value)
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 8);
+  if (raw.length < 2) return raw;
+  const isFirstAlpha = /^[A-Z]/.test(raw);
+  const boundary = isFirstAlpha ? raw.search(/[0-9]/) : raw.search(/[A-Z]/);
+  if (boundary > 0) {
+    return `${raw.slice(0, boundary)}-${raw.slice(boundary)}`;
+  }
+  return raw;
+}
+
+/**
+ * Validates optional Philippine plate number when provided.
+ */
+export function validatePlateNumber(value = '') {
+  const raw = String(value || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+  if (!raw) return null; // Optional
+  if (raw.length < 5 || raw.length > 8) {
+    return 'Plate number must be 5–8 letters/numbers (e.g. ABC-1234 or 7821-AB).';
+  }
+  if (!/[A-Z]/.test(raw) || !/[0-9]/.test(raw)) {
+    return 'Plate number must contain both letters and numbers (e.g. ABC-1234).';
   }
   return null;
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
@@ -37,10 +38,13 @@ class PasswordResetDialog {
               const SizedBox(height: 12),
               TextField(
                 controller: resetCtrl,
+                maxLength: 100,
                 keyboardType: TextInputType.emailAddress,
+                inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                 decoration: InputDecoration(
                   labelText: emailLabel,
                   prefixIcon: const Icon(Icons.email_outlined),
+                  counterText: '',
                 ),
               ),
               if (dialogErr != null) ...[

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/validators.dart';
 import '../../../core/widgets/connection_banner.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
@@ -91,7 +92,7 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
             onPressed: () {
-              final text = reasonCtrl.text.trim();
+              final text = Validators.sanitizeText(reasonCtrl.text);
               Navigator.pop(
                 ctx,
                 text.isEmpty ? 'Cancelled by Customer' : text,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../widgets/password_reset_dialog.dart';
 import '../../driver/screens/driver_dashboard_screen.dart';
@@ -160,17 +161,21 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
 
                   TextField(
                     controller: _emailCtrl,
+                    maxLength: 100,
                     keyboardType: TextInputType.emailAddress,
+                    inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                     textInputAction: TextInputAction.next,
                     style: const TextStyle(color: AppTheme.inkCharcoal),
                     decoration: const InputDecoration(
                       labelText: 'Driver Email Address',
                       prefixIcon: Icon(Icons.badge_outlined),
+                      counterText: '',
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _passCtrl,
+                    maxLength: 64,
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _handleDriverLogin(),
@@ -178,6 +183,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                     decoration: InputDecoration(
                       labelText: 'Assigned Password',
                       prefixIcon: const Icon(Icons.lock_outline),
+                      counterText: '',
                       suffixIcon: IconButton(
                         tooltip: _obscurePassword ? 'Show password' : 'Hide password',
                         icon: Icon(

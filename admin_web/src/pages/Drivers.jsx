@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from 'firebase/auth';
-import { ref, onValue, set, update } from 'firebase/database';
+import { ref, onValue, set, update, remove } from 'firebase/database';
 import { auth, db, firebaseConfig } from '../firebase';
 import {
   checkPasswordRequirements,
+  formatDigitsOnly,
+  formatPlateNumber,
   sanitizeText,
   validateEmail,
   validateName,
   validatePhPhone,
+  validatePlateNumber,
   validateStrongPassword,
 } from '../utils/validators';
 import {
@@ -23,6 +26,7 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  Trash2,
 } from 'lucide-react';
 
 export default function Drivers() {
@@ -34,6 +38,8 @@ export default function Drivers() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingDriver, setEditingDriver] = useState(null);
   const [toggleDriverTarget, setToggleDriverTarget] = useState(null);
+  const [deleteDriverTarget, setDeleteDriverTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -93,10 +99,9 @@ export default function Drivers() {
       return setFormError('Vehicle type must be 2–60 characters.');
     }
 
-    const cleanPlate = sanitizeText(plateNumber);
-    if (cleanPlate.length > 20) {
-      return setFormError('Plate number must be at most 20 characters.');
-    }
+    const cleanPlate = formatPlateNumber(plateNumber);
+    const plateErr = validatePlateNumber(cleanPlate);
+    if (plateErr) return setFormError(plateErr);
 
     const emailErr = validateEmail(email);
     if (emailErr) return setFormError(emailErr);
@@ -113,7 +118,7 @@ export default function Drivers() {
     let createdAuthUser = null;
     try {
       const cleanName = sanitizeText(name);
-      const cleanPhone = phone.replace(/[\s\-()]/g, '').trim();
+      const cleanPhone = formatDigitsOnly(phone, 12);
       const cleanEmail = email.trim().toLowerCase();
 
       secondaryApp = initializeApp(firebaseConfig, `DriverCreator-${Date.now()}`);
@@ -188,9 +193,9 @@ export default function Drivers() {
     setFormError('');
     setEditingDriver(driver);
     setName(driver.name || '');
-    setPhone(driver.phone || '');
+    setPhone(formatDigitsOnly(driver.phone || '', 12));
     setVehicle(driver.vehicle || 'Motorcycle');
-    setPlateNumber(driver.plateNumber || '');
+    setPlateNumber(formatPlateNumber(driver.plateNumber || ''));
   };
 
   const handleSaveEdit = async (e) => {
@@ -204,16 +209,21 @@ export default function Drivers() {
     if (phoneErr) return setFormError(phoneErr);
 
     const cleanName = sanitizeText(name);
-    const cleanPhone = phone.replace(/[\s\-()]/g, '').trim();
+    const cleanPhone = formatDigitsOnly(phone, 12);
     const cleanVehicle = sanitizeText(vehicle);
-    const cleanPlate = sanitizeText(plateNumber);
+    if (cleanVehicle.length < 2 || cleanVehicle.length > 60) {
+      return setFormError('Vehicle type must be 2–60 characters.');
+    }
+    const cleanPlate = formatPlateNumber(plateNumber);
+    const plateErr = validatePlateNumber(cleanPlate);
+    if (plateErr) return setFormError(plateErr);
 
     setIsSubmitting(true);
     try {
       await update(ref(db, `drivers/${editingDriver.id}`), {
         name: cleanName,
         phone: cleanPhone,
-        vehicle: cleanVehicle || 'Motorcycle',
+        vehicle: cleanVehicle,
         plateNumber: cleanPlate,
         updatedAt: new Date().toISOString(),
       });
@@ -260,6 +270,36 @@ export default function Drivers() {
       setPageNotice(`Password reset email sent to ${driverEmail}.`);
     } catch (err) {
       setPageError(err.message || 'Failed to send password reset.');
+    }
+  };
+
+  const handleDeleteDriver = async (driver) => {
+    if (!driver || isDeleting) return;
+    setPageError('');
+    setPageNotice('');
+
+    const activeCount = orders.filter(
+      (o) =>
+        o.driverId === driver.id &&
+        (o.status === 'Confirmed' || o.status === 'Out for Delivery')
+    ).length;
+    if (activeCount > 0) {
+      setPageError(
+        `Cannot delete ${driver.name} while they have ${activeCount} active delivery order(s). Please reassign or complete them first.`
+      );
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await remove(ref(db, `drivers/${driver.id}`));
+      await remove(ref(db, `users/${driver.id}`));
+      await remove(ref(db, `driver_locations/${driver.id}`));
+      setPageNotice(`Deleted driver account for ${driver.name}.`);
+    } catch (err) {
+      setPageError(err.message || 'Failed to delete driver account.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -430,6 +470,13 @@ export default function Drivers() {
                         >
                           {isActive ? <Ban className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
                         </button>
+                        <button
+                          onClick={() => setDeleteDriverTarget(driver)}
+                          className="p-2 text-charcoal-muted hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Delete Driver Account"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </td>
                     </tr>
                   );
@@ -470,12 +517,13 @@ export default function Drivers() {
                 <div>
                   <label className="block font-semibold mb-1">Mobile / Telephone Number</label>
                   <input
-                    type="text"
+                    type="tel"
+                    inputMode="numeric"
                     required
-                    maxLength={20}
+                    maxLength={12}
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="09171234567 or (02) 8123-4567"
+                    onChange={(e) => setPhone(formatDigitsOnly(e.target.value, 12))}
+                    placeholder="09171234567 or 0281234567"
                     className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-charcoal-header"
                   />
                 </div>
@@ -496,11 +544,11 @@ export default function Drivers() {
                   <label className="block font-semibold mb-1">Plate Number</label>
                   <input
                     type="text"
-                    maxLength={20}
+                    maxLength={9}
                     value={plateNumber}
-                    onChange={(e) => setPlateNumber(e.target.value)}
-                    placeholder="7821-AB"
-                    className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 font-mono focus:outline-none focus:border-charcoal-header"
+                    onChange={(e) => setPlateNumber(formatPlateNumber(e.target.value))}
+                    placeholder="ABC-1234 or 7821-AB"
+                    className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 font-mono uppercase focus:outline-none focus:border-charcoal-header"
                   />
                 </div>
               </div>
@@ -512,7 +560,7 @@ export default function Drivers() {
                     required
                     maxLength={100}
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value.replace(/\s+/g, ''))}
                     placeholder="cardo@charcoal.ph"
                     className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 font-mono focus:outline-none focus:border-charcoal-header"
                   />
@@ -627,12 +675,13 @@ export default function Drivers() {
               <div>
                 <label className="block font-semibold mb-1">Mobile / Telephone Number</label>
                 <input
-                  type="text"
+                  type="tel"
+                  inputMode="numeric"
                   required
-                  maxLength={20}
+                  maxLength={12}
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="09171234567 or (02) 8123-4567"
+                  onChange={(e) => setPhone(formatDigitsOnly(e.target.value, 12))}
+                  placeholder="09171234567 or 0281234567"
                   className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5"
                 />
               </div>
@@ -651,10 +700,11 @@ export default function Drivers() {
                 <label className="block font-semibold mb-1">Plate Number</label>
                 <input
                   type="text"
-                  maxLength={20}
+                  maxLength={9}
                   value={plateNumber}
-                  onChange={(e) => setPlateNumber(e.target.value)}
-                  className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 font-mono"
+                  onChange={(e) => setPlateNumber(formatPlateNumber(e.target.value))}
+                  placeholder="ABC-1234 or 7821-AB"
+                  className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 font-mono uppercase"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
@@ -712,6 +762,42 @@ export default function Drivers() {
                 }`}
               >
                 Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Driver Confirmation Modal */}
+      {deleteDriverTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white border border-charcoal-border rounded-2xl p-6 w-full max-w-sm shadow-2xl text-charcoal-ink">
+            <h3 className="font-bold text-base text-rose-700 mb-1">
+              Delete Driver {deleteDriverTarget.name}?
+            </h3>
+            <p className="text-xs text-charcoal-muted mb-4">
+              This will permanently remove their driver profile ({deleteDriverTarget.email}) and block all app login access. This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2 text-xs">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setDeleteDriverTarget(null)}
+                className="px-4 py-2 bg-charcoal-canvas border border-charcoal-border rounded-xl font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={async () => {
+                  const target = deleteDriverTarget;
+                  setDeleteDriverTarget(null);
+                  await handleDeleteDriver(target);
+                }}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white rounded-xl font-bold"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Driver'}
               </button>
             </div>
           </div>

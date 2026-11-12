@@ -34,7 +34,11 @@ class Validators {
   );
 
   static final RegExp _phPhoneRegex = RegExp(
-    r'^(09\d{9}|\+639\d{9}|02\d{7,8}|\+632\d{7,8}|0[3-8]\d{8}|\+63[3-8]\d{8}|[78]\d{7})$',
+    r'^(?:(?:0|\+?63)9\d{9}|(?:0|\+?63)2\d{7,8}|(?:0|\+?63)[3-8]\d{8}|[78]\d{7})$',
+  );
+
+  static final RegExp _nameCharRegex = RegExp(
+    r"^[A-Za-zÀ-ÖØ-öø-ÿÑñ\s.'-]+$",
   );
 
   static final RegExp _htmlTagOrControlRegex = RegExp(r'''[<>"']|[\x00-\x1F\x7F]''');
@@ -70,6 +74,9 @@ class Validators {
     if (clean.length > 60) {
       return '$label cannot exceed 60 characters.';
     }
+    if (!_nameCharRegex.hasMatch(clean)) {
+      return '$label may only contain letters, spaces, periods, hyphens, and apostrophes.';
+    }
     return null;
   }
 
@@ -78,6 +85,9 @@ class Validators {
     if (clean.isEmpty) return null; // Optional
     if (clean.length > 60) {
       return 'Middle Name cannot exceed 60 characters.';
+    }
+    if (!_nameCharRegex.hasMatch(clean)) {
+      return 'Middle Name may only contain letters, spaces, periods, hyphens, and apostrophes.';
     }
     return null;
   }
@@ -97,12 +107,12 @@ class Validators {
   }
 
   static String? validatePhPhone(String? value) {
-    final clean = (value ?? '').replaceAll(RegExp(r'[\s\-()]'), '').trim();
+    final clean = (value ?? '').replaceAll(RegExp(r'\D'), '');
     if (clean.isEmpty) {
       return 'Please enter your Mobile or Telephone Number.';
     }
     if (!_phPhoneRegex.hasMatch(clean)) {
-      return 'Use a valid PH mobile (e.g. 09171234567) or telephone number (e.g. (02) 8123-4567).';
+      return 'Use a valid PH mobile (e.g. 09171234567) or telephone number (e.g. 0281234567).';
     }
     return null;
   }
@@ -197,49 +207,56 @@ class Validators {
   }
 }
 
-/// Restricts phone/telephone input to `[0-9+\-\s()]` and caps digit count
-/// by Philippine prefix (`09` -> 11 digits, `02`/area code -> 10, `+63` -> 12, local `7`/`8` -> 8).
+/// Restricts phone/telephone input strictly to digits `0-9` and caps digit count
+/// by Philippine prefix (`09` -> 11 digits, `02`/area code -> 10, `63` -> 12, local `7`/`8` -> 8).
 class PhPhoneInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final cleaned = StringBuffer();
-    for (var i = 0; i < newValue.text.length; i++) {
-      final ch = newValue.text[i];
-      if (RegExp(r'[0-9\-\s()]').hasMatch(ch) || (ch == '+' && cleaned.isEmpty)) {
-        cleaned.write(ch);
-      }
-    }
-    final preFiltered = cleaned.toString();
-    final allDigits = preFiltered.replaceAll(RegExp(r'\D'), '');
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
 
     final int maxDigits;
-    if (preFiltered.startsWith('+')) {
+    if (digits.startsWith('63')) {
       maxDigits = 12;
-    } else if (allDigits.startsWith('09')) {
+    } else if (digits.startsWith('09')) {
       maxDigits = 11;
-    } else if (allDigits.startsWith('0')) {
+    } else if (digits.startsWith('0')) {
       maxDigits = 10;
-    } else if (allDigits.startsWith('7') || allDigits.startsWith('8')) {
+    } else if (digits.startsWith('7') || digits.startsWith('8')) {
       maxDigits = 8;
     } else {
-      maxDigits = 11;
+      maxDigits = 12;
     }
 
-    final result = StringBuffer();
-    var digitCount = 0;
-    for (var i = 0; i < preFiltered.length; i++) {
-      final ch = preFiltered[i];
-      if (RegExp(r'\d').hasMatch(ch)) {
-        if (digitCount >= maxDigits) continue;
-        digitCount++;
+    final finalText =
+        digits.length > maxDigits ? digits.substring(0, maxDigits) : digits;
+    final offset = newValue.selection.baseOffset.clamp(0, finalText.length);
+    return TextEditingValue(
+      text: finalText,
+      selection: TextSelection.collapsed(offset: offset),
+    );
+  }
+}
+
+/// Restricts name input to letters (including accented/Ñ), spaces, periods, hyphens, and apostrophes.
+class NameInputFormatter extends TextInputFormatter {
+  static final RegExp _allowed = RegExp(r"[A-Za-zÀ-ÖØ-öø-ÿÑñ\s.'-]");
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final buf = StringBuffer();
+    for (var i = 0; i < newValue.text.length; i++) {
+      final ch = newValue.text[i];
+      if (_allowed.hasMatch(ch)) {
+        buf.write(ch);
       }
-      result.write(ch);
     }
-
-    final finalText = result.toString();
+    final finalText = buf.toString();
     final offset = newValue.selection.baseOffset.clamp(0, finalText.length);
     return TextEditingValue(
       text: finalText,

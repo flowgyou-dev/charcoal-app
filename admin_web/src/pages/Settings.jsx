@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 're
 import L from 'leaflet';
 import { ref, onValue, set } from 'firebase/database';
 import { db } from '../firebase';
-import { sanitizeText, validatePositivePrice } from '../utils/validators';
+import { formatDigitsOnly, sanitizeText, validatePositivePrice } from '../utils/validators';
 import { DEFAULT_HUB, searchNominatimAddress } from '../utils/routing';
 import {
   MapPin,
@@ -172,6 +172,12 @@ export default function Settings() {
     const perKmErr = validatePositivePrice(form.distancePerKm, 0, 1000, 'Rate per km');
     if (perKmErr) return setError(perKmErr);
 
+    const cleanAcctNum = sanitizeText(form.paymentAccountNumber || '').slice(0, 25);
+    const acctDigits = cleanAcctNum.replace(/\D/g, '');
+    if (cleanAcctNum && acctDigits.length < 7) {
+      return setError('Account / Wallet number must have at least 7 digits (or leave it blank).');
+    }
+
     setSaving(true);
     try {
       await set(ref(db, 'settings'), {
@@ -184,7 +190,7 @@ export default function Settings() {
         distancePerKm: Math.round(Number(form.distancePerKm)),
         paymentQrImage: form.paymentQrImage || '',
         paymentAccountName: sanitizeText(form.paymentAccountName || '').slice(0, 80),
-        paymentAccountNumber: sanitizeText(form.paymentAccountNumber || '').slice(0, 40),
+        paymentAccountNumber: cleanAcctNum,
         updatedAt: new Date().toISOString(),
       });
       setSuccess('Settings saved! Live checkout, delivery fees, QR code, at map hub ay updated na.');
@@ -255,6 +261,7 @@ export default function Settings() {
                 <Search className="w-3.5 h-3.5 text-charcoal-muted absolute left-3 top-2.5" />
                 <input
                   type="text"
+                  maxLength={120}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
@@ -388,12 +395,13 @@ export default function Settings() {
                     Flat Delivery Fee (₱) — enter <span className="font-mono">0</span> for Free Delivery
                   </label>
                   <input
-                    type="number"
-                    min="0"
-                    max="10000"
-                    step="1"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={5}
                     value={form.flatDeliveryFee}
-                    onChange={(e) => setForm({ ...form, flatDeliveryFee: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, flatDeliveryFee: formatDigitsOnly(e.target.value, 5) })
+                    }
                     className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2 font-mono text-charcoal-ink focus:outline-none focus:border-charcoal-header"
                   />
                 </div>
@@ -402,24 +410,26 @@ export default function Settings() {
                   <div>
                     <label className="block font-semibold text-charcoal-ink mb-1">Base Fee (₱)</label>
                     <input
-                      type="number"
-                      min="0"
-                      max="10000"
-                      step="1"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={5}
                       value={form.distanceBaseFee}
-                      onChange={(e) => setForm({ ...form, distanceBaseFee: e.target.value })}
+                      onChange={(e) =>
+                        setForm({ ...form, distanceBaseFee: formatDigitsOnly(e.target.value, 5) })
+                      }
                       className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2 font-mono text-charcoal-ink focus:outline-none focus:border-charcoal-header"
                     />
                   </div>
                   <div>
                     <label className="block font-semibold text-charcoal-ink mb-1">Additional Rate per km (₱)</label>
                     <input
-                      type="number"
-                      min="0"
-                      max="1000"
-                      step="1"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={4}
                       value={form.distancePerKm}
-                      onChange={(e) => setForm({ ...form, distancePerKm: e.target.value })}
+                      onChange={(e) =>
+                        setForm({ ...form, distancePerKm: formatDigitsOnly(e.target.value, 4) })
+                      }
                       className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2 font-mono text-charcoal-ink focus:outline-none focus:border-charcoal-header"
                     />
                   </div>
@@ -453,10 +463,16 @@ export default function Settings() {
                   <label className="block font-semibold text-charcoal-ink mb-1">Account / Wallet Number</label>
                   <input
                     type="text"
-                    maxLength={40}
+                    inputMode="numeric"
+                    maxLength={25}
                     value={form.paymentAccountNumber || ''}
-                    onChange={(e) => setForm({ ...form, paymentAccountNumber: e.target.value })}
-                    placeholder="e.g. 0917 123 4567"
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        paymentAccountNumber: e.target.value.replace(/[^0-9\-\s]/g, '').slice(0, 25),
+                      })
+                    }
+                    placeholder="e.g. 09171234567"
                     className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2 font-mono text-charcoal-ink focus:outline-none focus:border-charcoal-header"
                   />
                 </div>

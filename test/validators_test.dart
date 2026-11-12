@@ -70,7 +70,7 @@ void main() {
       expect(Validators.validatePhPhone('+63281234567'), isNull);
     });
 
-    test('PhPhoneInputFormatter caps digits by PH mobile and landline prefixes', () {
+    test('PhPhoneInputFormatter strips non-digits and caps by PH prefixes', () {
       final formatter = PhPhoneInputFormatter();
       final clippedMobile = formatter.formatEditUpdate(
         TextEditingValue.empty,
@@ -78,11 +78,39 @@ void main() {
       );
       expect(clippedMobile.text, '09999999999');
 
+      final lettersStripped = formatter.formatEditUpdate(
+        TextEditingValue.empty,
+        const TextEditingValue(text: '0917abc1234!'),
+      );
+      expect(lettersStripped.text, '09171234');
+
       final landline = formatter.formatEditUpdate(
         TextEditingValue.empty,
         const TextEditingValue(text: '(02) 8123-4567'),
       );
-      expect(landline.text, '(02) 8123-4567');
+      expect(landline.text, '0281234567');
+
+      final intl = formatter.formatEditUpdate(
+        TextEditingValue.empty,
+        const TextEditingValue(text: '+63 917-123-4567'),
+      );
+      expect(intl.text, '639171234567');
+    });
+
+    test('NameInputFormatter and validateName allow valid name characters only', () {
+      final formatter = NameInputFormatter();
+      final cleaned = formatter.formatEditUpdate(
+        TextEditingValue.empty,
+        const TextEditingValue(text: 'Ma. Elena123@'),
+      );
+      expect(cleaned.text, 'Ma. Elena');
+
+      expect(Validators.validateName('Juan123'), isNotNull);
+      expect(Validators.validateName('Test@User'), isNotNull);
+      expect(Validators.validateName('Ma. Elena'), isNull);
+      expect(Validators.validateName('Niño Dela Cruz'), isNull);
+      expect(Validators.validateMiddleName('G.'), isNull);
+      expect(Validators.validateMiddleName('123'), isNotNull);
     });
 
     test('validateStrongPassword requires length, uppercase, number, and symbol', () {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ref, onValue, update, get, push, remove, runTransaction } from 'firebase/database';
 import { db } from '../firebase';
+import { sanitizeText } from '../utils/validators';
 import {
   MapPin,
   Phone,
@@ -251,6 +252,7 @@ export default function Orders() {
             <Search className="w-4 h-4 text-charcoal-muted absolute left-3.5 top-2.5" />
             <input
               type="text"
+              maxLength={100}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search order ID, customer, address, driver, or OCR Ref No..."
@@ -571,7 +573,7 @@ export default function Orders() {
                   const target = cancelTargetOrder;
                   setCancelTargetOrder(null);
                   await handleUpdateStatus(target, 'Cancelled', {
-                    cancelReason: cancelReason.trim() || 'Cancelled by Admin',
+                    cancelReason: sanitizeText(cancelReason) || 'Cancelled by Admin',
                   });
                 }}
                 className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold"

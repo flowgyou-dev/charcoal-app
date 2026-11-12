@@ -257,10 +257,11 @@ export default function Analytics() {
           </button>
         ))}
         {rangePreset === 'custom' && (
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex flex-wrap items-center gap-2 ml-auto">
             <input
               type="date"
               value={customStart}
+              max={customEnd || undefined}
               onChange={(e) => setCustomStart(e.target.value)}
               className="bg-charcoal-canvas border border-charcoal-border rounded-lg px-2.5 py-1 text-xs"
             />
@@ -268,9 +269,15 @@ export default function Analytics() {
             <input
               type="date"
               value={customEnd}
+              min={customStart || undefined}
               onChange={(e) => setCustomEnd(e.target.value)}
               className="bg-charcoal-canvas border border-charcoal-border rounded-lg px-2.5 py-1 text-xs"
             />
+            {customStart && customEnd && customStart > customEnd && (
+              <span className="text-[11px] font-semibold text-rose-600">
+                Start date cannot be after end date.
+              </span>
+            )}
           </div>
         )}
       </div>

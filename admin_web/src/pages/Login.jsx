@@ -31,6 +31,7 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
 
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [resetError, setResetError] = useState('');
   const [resetBusy, setResetBusy] = useState(false);
 
   useEffect(() => {
@@ -160,12 +161,12 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
   const handlePasswordReset = async (e) => {
     e.preventDefault();
     if (resetBusy) return;
-    setError('');
+    setResetError('');
     setNotice('');
 
     const emailErr = validateEmail(resetEmail);
     if (emailErr) {
-      setError(emailErr);
+      setResetError(emailErr);
       return;
     }
 
@@ -173,17 +174,18 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
     try {
       await sendPasswordResetEmail(auth, resetEmail.trim().toLowerCase());
       setShowResetModal(false);
+      setResetError('');
       setNotice(
         `If an account is registered for ${resetEmail.trim().toLowerCase()}, a password reset link has been sent. Please check your inbox or spam folder.`
       );
       setResetEmail('');
     } catch (err) {
       if (err?.code === 'auth/user-not-found') {
-        setError('No registered account was found with that email address.');
+        setResetError('No registered account was found with that email address.');
       } else if (err?.code === 'auth/too-many-requests') {
-        setError('Too many reset requests. Please wait a bit before trying again.');
+        setResetError('Too many reset requests. Please wait a bit before trying again.');
       } else {
-        setError(err.message || 'Failed to send password reset email.');
+        setResetError(err.message || 'Failed to send password reset email.');
       }
     } finally {
       setResetBusy(false);
@@ -247,7 +249,7 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
                 maxLength={100}
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value.replace(/\s+/g, ''))}
                 placeholder="admin@charcoal.ph"
                 className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl pl-10 pr-3.5 py-2.5 text-charcoal-ink focus:outline-none focus:border-charcoal-header"
               />
@@ -262,6 +264,7 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
                   type="button"
                   onClick={() => {
                     setError('');
+                    setResetError('');
                     setResetEmail(email);
                     setShowResetModal(true);
                   }}
@@ -386,18 +389,28 @@ export default function Login({ externalError, isSettingUpRef, onAdminInitialize
               Enter your registered admin email address to receive a password reset link.
             </p>
             <form onSubmit={handlePasswordReset} className="space-y-4 text-xs">
+              {resetError && (
+                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2 text-rose-700 text-xs">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <span>{resetError}</span>
+                </div>
+              )}
               <input
                 type="email"
+                maxLength={100}
                 required
                 value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
+                onChange={(e) => setResetEmail(e.target.value.replace(/\s+/g, ''))}
                 placeholder="admin@charcoal.ph"
                 className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 text-charcoal-ink focus:outline-none focus:border-charcoal-header"
               />
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowResetModal(false)}
+                  onClick={() => {
+                    setResetError('');
+                    setShowResetModal(false);
+                  }}
                   className="px-4 py-2 bg-charcoal-canvas border border-charcoal-border rounded-xl font-semibold text-charcoal-ink"
                 >
                   Cancel

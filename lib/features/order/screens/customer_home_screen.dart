@@ -10,6 +10,7 @@ import '../../../core/models/shop_settings_model.dart';
 import '../../../core/services/routing_service.dart';
 import '../../../core/services/settings_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/validators.dart';
 import '../../../core/widgets/connection_banner.dart';
 import '../../auth/models/user_model.dart';
 import '../../inventory/models/inventory_model.dart';
@@ -222,9 +223,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Future<void> _handlePlaceOrder(CharcoalInventory inv) async {
-    final address = _addressCtrl.text.trim();
-    if (address.isEmpty) {
-      _showSnack('Please enter your delivery address or landmark.');
+    final address = Validators.sanitizeText(_addressCtrl.text);
+    final addrErr = Validators.validateAddress(address);
+    if (addrErr != null) {
+      _showSnack(addrErr);
       return;
     }
 
@@ -746,10 +748,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             const SizedBox(height: 10),
             TextField(
               controller: _searchCtrl,
+              maxLength: 120,
               onChanged: _onSearchChanged,
               onSubmitted: _runAddressSearch,
               decoration: InputDecoration(
                 hintText: 'Search barangay, street, or landmark...',
+                counterText: '',
                 prefixIcon: const Icon(Icons.search, size: 20),
                 suffixIcon: _isSearchingAddress
                     ? const Padding(

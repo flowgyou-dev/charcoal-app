@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../widgets/email_verification_dialog.dart';
@@ -207,6 +208,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
                         child: TextField(
                           controller: _firstNameCtrl,
                           maxLength: 40,
+                          inputFormatters: [NameInputFormatter()],
                           textCapitalization: TextCapitalization.words,
                           textInputAction: TextInputAction.next,
                           decoration: const InputDecoration(
@@ -221,6 +223,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
                         child: TextField(
                           controller: _lastNameCtrl,
                           maxLength: 40,
+                          inputFormatters: [NameInputFormatter()],
                           textCapitalization: TextCapitalization.words,
                           textInputAction: TextInputAction.next,
                           decoration: const InputDecoration(
@@ -236,6 +239,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
                   TextField(
                     controller: _middleNameCtrl,
                     maxLength: 40,
+                    inputFormatters: [NameInputFormatter()],
                     textCapitalization: TextCapitalization.words,
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
@@ -247,13 +251,13 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
                   const SizedBox(height: 14),
                   TextField(
                     controller: _phoneCtrl,
-                    maxLength: 20,
-                    keyboardType: TextInputType.phone,
+                    maxLength: 12,
+                    keyboardType: TextInputType.number,
                     inputFormatters: [PhPhoneInputFormatter()],
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
                       labelText: 'Mobile or Telephone Number *',
-                      hintText: 'e.g. 09171234567 or (02) 8123-4567',
+                      hintText: 'e.g. 09171234567 or 0281234567',
                       prefixIcon: Icon(Icons.phone_outlined),
                       counterText: '',
                     ),
@@ -263,6 +267,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
                     controller: _emailCtrl,
                     maxLength: 100,
                     keyboardType: TextInputType.emailAddress,
+                    inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
                       labelText: 'Email Address (Recognized Domain) *',

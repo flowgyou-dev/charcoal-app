@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { ref, onValue, update, push, runTransaction } from 'firebase/database';
 import { db } from '../firebase';
-import { sanitizeText, validatePositiveInt, validatePositivePrice } from '../utils/validators';
+import {
+  formatDecimalInput,
+  formatDigitsOnly,
+  sanitizeText,
+  validatePositiveInt,
+  validatePositivePrice,
+} from '../utils/validators';
 import { PlusCircle, Edit3, History, AlertCircle } from 'lucide-react';
 
 export default function Inventory() {
@@ -345,12 +351,12 @@ export default function Inventory() {
               <div>
                 <label className="block text-charcoal-ink font-semibold mb-1">Quantity (+)</label>
                 <input
-                  type="number"
-                  min="1"
-                  max="10000"
-                  step="1"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={5}
                   value={restockQty}
-                  onChange={(e) => setRestockQty(e.target.value)}
+                  onChange={(e) => setRestockQty(formatDigitsOnly(e.target.value, 5))}
+                  placeholder="1 - 10000"
                   className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 text-charcoal-ink font-mono text-sm focus:outline-none focus:border-charcoal-header"
                   required
                 />
@@ -426,13 +432,13 @@ export default function Inventory() {
                 <div>
                   <label className="block text-charcoal-ink font-semibold mb-1">Low Stock Limit</label>
                   <input
-                    type="number"
-                    min="1"
-                    max="5000"
-                    step="1"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
                     required
                     value={editLowStockLimit}
-                    onChange={(e) => setEditLowStockLimit(e.target.value)}
+                    onChange={(e) => setEditLowStockLimit(formatDigitsOnly(e.target.value, 4))}
+                    placeholder="1 - 5000"
                     className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 font-mono text-charcoal-ink focus:outline-none focus:border-charcoal-header"
                   />
                 </div>
@@ -440,13 +446,13 @@ export default function Inventory() {
               <div>
                 <label className="block text-charcoal-ink font-semibold mb-1">Price per Unit (₱)</label>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="1"
-                  max="50000"
+                  type="text"
+                  inputMode="decimal"
+                  maxLength={9}
                   required
                   value={editPrice}
-                  onChange={(e) => setEditPrice(e.target.value)}
+                  onChange={(e) => setEditPrice(formatDecimalInput(e.target.value, 2, 9))}
+                  placeholder="1 - 50000"
                   className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 font-mono text-sm text-charcoal-ink focus:outline-none focus:border-charcoal-header"
                 />
               </div>

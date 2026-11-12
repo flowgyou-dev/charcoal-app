@@ -6,6 +6,7 @@ import '../../../core/models/shop_settings_model.dart';
 import '../../../core/services/routing_service.dart';
 import '../../../core/services/settings_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/validators.dart';
 import '../../../core/widgets/connection_banner.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
@@ -111,7 +112,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
             onPressed: () {
-              final r = reasonCtrl.text.trim();
+              final r = Validators.sanitizeText(reasonCtrl.text);
               Navigator.pop(ctx, r.isEmpty ? 'Cancelled by Customer' : r);
             },
             child: const Text('Yes, Cancel'),
