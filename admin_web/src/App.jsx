@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import Orders from './pages/Orders';
 import Drivers from './pages/Drivers';
+import Customers from './pages/Customers';
 import LiveTracking from './pages/LiveTracking';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
@@ -15,6 +16,7 @@ import {
   Package,
   ShoppingCart,
   Users,
+  UserCheck,
   MapPin,
   BarChart3,
   Settings as SettingsIcon,
@@ -179,6 +181,7 @@ export default function App() {
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
     { id: 'inventory', name: 'Charcoal Inventory', icon: Package },
     { id: 'orders', name: 'Orders & Dispatch', icon: ShoppingCart },
+    { id: 'customers', name: 'Manage Customers', icon: UserCheck },
     { id: 'drivers', name: 'Manage Drivers', icon: Users },
     { id: 'map', name: 'Live Delivery Map', icon: MapPin },
     { id: 'analytics', name: 'Sales Analytics', icon: BarChart3 },
@@ -193,6 +196,8 @@ export default function App() {
         return <Inventory />;
       case 'orders':
         return <Orders />;
+      case 'customers':
+        return <Customers />;
       case 'drivers':
         return <Drivers />;
       case 'map':

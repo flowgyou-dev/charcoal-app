@@ -83,22 +83,33 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   }
 
   Future<void> _toggleGps(bool val) async {
-    if (val) {
-      final ok = await _driverService.startGpsBroadcast(_driverId, _driverName);
-      if (!mounted) return;
-      setState(() => _isGpsOn = ok);
-      if (!ok) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'GPS and Location permission are required to broadcast live location.',
+    try {
+      if (val) {
+        final ok = await _driverService.startGpsBroadcast(_driverId, _driverName);
+        if (!mounted) return;
+        setState(() => _isGpsOn = ok);
+        if (!ok) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'GPS and Location permission are required to broadcast live location.',
+              ),
             ),
-          ),
-        );
+          );
+        }
+      } else {
+        await _driverService.stopGpsBroadcast(_driverId);
+        if (mounted) setState(() => _isGpsOn = false);
       }
-    } else {
-      await _driverService.stopGpsBroadcast(_driverId);
-      if (mounted) setState(() => _isGpsOn = false);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isGpsOn = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red.shade700,
+          content: Text('Unable to update GPS status: $e'),
+        ),
+      );
     }
   }
 
@@ -277,7 +288,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Driver Task Portal'),
+        title: const Text(
+          'Driver Task Portal',
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           Row(
             children: [

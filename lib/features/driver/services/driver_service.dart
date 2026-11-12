@@ -28,13 +28,23 @@ class DriverService {
     final driverRef = _database.ref('${AppConstants.dbDrivers}/$driverId');
 
     // Automatically mark offline if connection drops or app is force-killed
-    await locRef.child('isOnline').onDisconnect().set(false);
-    await driverRef.child('isOnline').onDisconnect().set(false);
+    try {
+      await driverRef.child('isOnline').onDisconnect().set(false);
+    } catch (_) {}
 
     const locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
       distanceFilter: 5,
     );
+
+    bool locDisconnectRegistered = false;
+    Future<void> registerLocDisconnectOnce() async {
+      if (locDisconnectRegistered) return;
+      try {
+        await locRef.child('isOnline').onDisconnect().set(false);
+        locDisconnectRegistered = true;
+      } catch (_) {}
+    }
 
     // Send immediate initial position
     try {
@@ -51,23 +61,27 @@ class DriverService {
         'isOnline': true,
         'lastUpdated': DateTime.now().toIso8601String(),
       });
+      await registerLocDisconnectOnce();
     } catch (_) {
       // Wait for stream position if single shot fails
     }
 
     await _positionSubscription?.cancel();
     _positionSubscription = Geolocator.getPositionStream(locationSettings: locationSettings).listen(
-      (Position position) {
-        locRef.set({
-          'driverId': driverId,
-          'driverName': driverName,
-          'latitude': position.latitude,
-          'longitude': position.longitude,
-          'heading': position.heading,
-          'speed': position.speed,
-          'isOnline': true,
-          'lastUpdated': DateTime.now().toIso8601String(),
-        });
+      (Position position) async {
+        try {
+          await locRef.set({
+            'driverId': driverId,
+            'driverName': driverName,
+            'latitude': position.latitude,
+            'longitude': position.longitude,
+            'heading': position.heading,
+            'speed': position.speed,
+            'isOnline': true,
+            'lastUpdated': DateTime.now().toIso8601String(),
+          });
+          await registerLocDisconnectOnce();
+        } catch (_) {}
       },
       onError: (_) {},
     );
@@ -80,8 +94,16 @@ class DriverService {
   Future<void> stopGpsBroadcast(String driverId) async {
     await _positionSubscription?.cancel();
     _positionSubscription = null;
-    await _database.ref('${AppConstants.dbDriverLocations}/$driverId').update({'isOnline': false});
-    await _database.ref('${AppConstants.dbDrivers}/$driverId').update({'isOnline': false});
+    try {
+      final locRef = _database.ref('${AppConstants.dbDriverLocations}/$driverId');
+      final snap = await locRef.get();
+      if (snap.exists) {
+        await locRef.update({'isOnline': false});
+      }
+    } catch (_) {}
+    try {
+      await _database.ref('${AppConstants.dbDrivers}/$driverId').update({'isOnline': false});
+    } catch (_) {}
   }
 
   // 3. Stream Assigned Orders for this Driver
