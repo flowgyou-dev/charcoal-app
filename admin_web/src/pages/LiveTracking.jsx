@@ -76,7 +76,7 @@ export default function LiveTracking() {
         if (snap.exists()) {
           const val = snap.val();
           const list = Object.keys(val)
-            .map((k) => ({ id: k, ...val[k] }))
+            .map((k) => ({ ...val[k], id: k, displayId: val[k]?.id || k }))
             .filter(
               (o) =>
                 Number.isFinite(Number(o.deliveryLat)) &&

@@ -71,7 +71,13 @@ export default function Drivers() {
     const unsubOrders = onValue(ref(db, 'orders'), (snap) => {
       if (snap.exists()) {
         const val = snap.val();
-        setOrders(Object.keys(val).map((k) => ({ id: k, ...val[k] })));
+        setOrders(
+          Object.keys(val).map((k) => ({
+            ...val[k],
+            id: k,
+            displayId: val[k]?.id || k,
+          }))
+        );
       } else {
         setOrders([]);
       }
@@ -382,9 +388,21 @@ export default function Drivers() {
                   const activeCount = orders.filter(
                     (o) => o.driverId === driver.id && (o.status === 'Confirmed' || o.status === 'Out for Delivery')
                   ).length;
-                  const completedCount = orders.filter(
+                  const completedOrders = orders.filter(
                     (o) => o.driverId === driver.id && o.status === 'Delivered'
-                  ).length;
+                  );
+                  const completedCount = completedOrders.length;
+                  const deliveredSacks = completedOrders.reduce(
+                    (sum, o) => sum + (Number(o.sacksOrdered) || 0),
+                    0
+                  );
+                  const todayStr = new Date().toDateString();
+                  const todayCodRemit = completedOrders
+                    .filter((o) => {
+                      const d = o.deliveredAt || o.createdAt;
+                      return d && new Date(d).toDateString() === todayStr && o.paymentMethod !== 'ONLINE_QR';
+                    })
+                    .reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0);
 
                   return (
                     <tr key={driver.id} className="hover:bg-[#F8FAFA] transition-colors">
@@ -428,7 +446,10 @@ export default function Drivers() {
                           {driver.isOnline && isActive ? 'GPS Active' : 'Offline'}
                         </span>
                         <p className="text-[11px] text-charcoal-muted mt-1">
-                          {activeCount} active • {completedCount} delivered
+                          {activeCount} active • {completedCount} delivered ({deliveredSacks} sacks)
+                        </p>
+                        <p className="text-[11px] font-semibold text-charcoal-eco mt-0.5">
+                          Today&apos;s COD Remit: ₱{todayCodRemit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </td>
 

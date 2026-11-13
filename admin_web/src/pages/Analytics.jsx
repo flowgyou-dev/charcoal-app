@@ -38,7 +38,13 @@ export default function Analytics() {
       (snap) => {
         if (snap.exists()) {
           const val = snap.val();
-          setOrders(Object.keys(val).map((k) => ({ id: k, ...val[k] })));
+          setOrders(
+          Object.keys(val).map((k) => ({
+            ...val[k],
+            id: k,
+            displayId: val[k]?.id || k,
+          }))
+        );
         } else {
           setOrders([]);
         }

@@ -172,6 +172,9 @@ export default function Settings() {
     const perKmErr = validatePositivePrice(form.distancePerKm, 0, 1000, 'Rate per km');
     if (perKmErr) return setError(perKmErr);
 
+    const maxOrderErr = validatePositivePrice(form.maxOrderSacks ?? 50, 1, 1000, 'Max order sacks');
+    if (maxOrderErr) return setError(maxOrderErr);
+
     const cleanAcctNum = sanitizeText(form.paymentAccountNumber || '').slice(0, 25);
     const acctDigits = cleanAcctNum.replace(/\D/g, '');
     if (cleanAcctNum && acctDigits.length < 7) {
@@ -188,6 +191,7 @@ export default function Settings() {
         flatDeliveryFee: Math.round(Number(form.flatDeliveryFee)),
         distanceBaseFee: Math.round(Number(form.distanceBaseFee)),
         distancePerKm: Math.round(Number(form.distancePerKm)),
+        maxOrderSacks: Math.round(Number(form.maxOrderSacks ?? 50)),
         paymentQrImage: form.paymentQrImage || '',
         paymentAccountName: sanitizeText(form.paymentAccountName || '').slice(0, 80),
         paymentAccountNumber: cleanAcctNum,
@@ -435,6 +439,21 @@ export default function Settings() {
                   </div>
                 </div>
               )}
+              <div className="pt-3 border-t border-charcoal-border/60">
+                <label className="block font-semibold text-charcoal-ink mb-1 text-xs">
+                  Max Order Sacks per Customer (1–1,000)
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={form.maxOrderSacks ?? 50}
+                  onChange={(e) =>
+                    setForm({ ...form, maxOrderSacks: formatDigitsOnly(e.target.value, 4) })
+                  }
+                  className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2 font-mono text-charcoal-ink focus:outline-none focus:border-charcoal-header text-xs"
+                />
+              </div>
             </div>
 
             {/* Card 3: Online Payment QR Code Upload */}

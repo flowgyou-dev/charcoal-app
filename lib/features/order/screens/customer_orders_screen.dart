@@ -4,6 +4,7 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/connection_banner.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
+import '../widgets/order_receipt_sheet.dart';
 import 'customer_tracking_screen.dart';
 
 class CustomerOrdersScreen extends StatefulWidget {
@@ -286,11 +287,82 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
                               ),
                             ),
                           ],
-                          if (canCancel) ...[
-                            const SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppTheme.headerForest,
+                                  side: const BorderSide(
+                                    color: AppTheme.surfaceBorder,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                ),
+                                onPressed: () =>
+                                    OrderReceiptSheet.show(context, o),
+                                icon: const Icon(
+                                  Icons.receipt_long_outlined,
+                                  size: 16,
+                                ),
+                                label: const Text(
+                                  'Receipt',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
+                              if (o.status == 'Delivered' && o.rating == null) ...[
+                                const SizedBox(width: 8),
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.amber.shade800,
+                                    side: BorderSide(color: Colors.amber.shade300),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                  ),
+                                  onPressed: () => _promptRateOrder(o),
+                                  icon: const Icon(Icons.star_outline, size: 16),
+                                  label: const Text(
+                                    'Rate',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              ],
+                              if (o.status == 'Delivered' ||
+                                  o.status == 'Cancelled') ...[
+                                const SizedBox(width: 8),
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppTheme.emeraldGreen,
+                                    side: const BorderSide(
+                                      color: AppTheme.emeraldGreen,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pop(context, {
+                                      'sacks': o.sacksOrdered,
+                                      'address': o.deliveryAddress,
+                                      'lat': o.deliveryLat,
+                                      'lng': o.deliveryLng,
+                                    });
+                                  },
+                                  icon: const Icon(Icons.replay, size: 16),
+                                  label: const Text(
+                                    'Order Again',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              ],
+                              if (canCancel) ...[
+                                const SizedBox(width: 8),
                                 OutlinedButton.icon(
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: Colors.red.shade700,
@@ -321,8 +393,8 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
                                   ),
                                 ),
                               ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -334,6 +406,76 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _promptRateOrder(CharcoalOrder order) async {
+    int selectedStars = 5;
+    final commentCtrl = TextEditingController();
+
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Rate Your Delivery'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  final star = index + 1;
+                  return IconButton(
+                    onPressed: () => setDialogState(() => selectedStars = star),
+                    icon: Icon(
+                      star <= selectedStars ? Icons.star : Icons.star_border,
+                      color: Colors.amber.shade700,
+                      size: 32,
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: commentCtrl,
+                maxLength: 200,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  hintText: 'Optional feedback (e.g. Fast delivery!)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Submit'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (submitted == true && mounted) {
+      await _orderService.submitOrderRating(
+        order.id,
+        selectedStars,
+        commentCtrl.text,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Thank you for rating your order!'),
+            backgroundColor: AppTheme.emeraldGreen,
+          ),
+        );
+      }
+    }
+    commentCtrl.dispose();
   }
 
   Widget _pillTag(String label, Color color) {

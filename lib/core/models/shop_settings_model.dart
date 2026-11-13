@@ -12,6 +12,7 @@ class ShopSettings {
   final String paymentQrImage;
   final String paymentAccountName;
   final String paymentAccountNumber;
+  final int maxOrderSacks;
 
   const ShopSettings({
     this.hubName = 'Charcoal Central Warehouse',
@@ -24,6 +25,7 @@ class ShopSettings {
     this.paymentQrImage = '',
     this.paymentAccountName = '',
     this.paymentAccountNumber = '',
+    this.maxOrderSacks = 50,
   });
 
   bool get hasPaymentQr => paymentQrImage.trim().isNotEmpty;
@@ -40,6 +42,7 @@ class ShopSettings {
       paymentQrImage: map['paymentQrImage']?.toString() ?? '',
       paymentAccountName: map['paymentAccountName']?.toString() ?? '',
       paymentAccountNumber: map['paymentAccountNumber']?.toString() ?? '',
+      maxOrderSacks: (int.tryParse(map['maxOrderSacks']?.toString() ?? '50') ?? 50).clamp(1, 1000),
     );
   }
 

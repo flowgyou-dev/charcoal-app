@@ -10,6 +10,7 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/connection_banner.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
+import '../widgets/order_receipt_sheet.dart';
 
 class CustomerTrackingScreen extends StatefulWidget {
   final CharcoalOrder order;
@@ -377,6 +378,9 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
           }
         });
 
+        final isDriverOffline =
+            driverCoords != null && driverCoords['isOnline'] == 0.0;
+
         return Stack(
           children: [
             FlutterMap(
@@ -519,6 +523,36 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                   child: const Icon(Icons.my_location, size: 18),
                 ),
               ),
+            if (isDriverOffline)
+              Positioned(
+                bottom: 12,
+                left: 12,
+                right: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.amber.shade700),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.gps_off, size: 16, color: Colors.amber.shade700),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Driver GPS paused / waiting for signal',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.inkCharcoal,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         );
       },
@@ -569,6 +603,11 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                 ),
               ],
             ),
+          ),
+          IconButton(
+            tooltip: 'View Receipt',
+            onPressed: () => OrderReceiptSheet.show(context, currentOrder),
+            icon: const Icon(Icons.receipt_long_outlined, color: AppTheme.headerForest),
           ),
           if (!isCancelled && hasPhone)
             IconButton.filled(

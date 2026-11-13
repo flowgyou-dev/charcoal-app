@@ -231,10 +231,25 @@ class OrderService {
       final data = event.snapshot.value as Map<dynamic, dynamic>;
       final lat = double.tryParse(data['latitude']?.toString() ?? '');
       final lng = double.tryParse(data['longitude']?.toString() ?? '');
+      final isOnline = data['isOnline'] == true ? 1.0 : 0.0;
       if (lat != null && lng != null) {
-        return {'lat': lat, 'lng': lng};
+        return {'lat': lat, 'lng': lng, 'isOnline': isOnline};
       }
       return null;
+    });
+  }
+
+  /// Saves a 1-5 star customer rating and optional feedback on a delivered order.
+  Future<void> submitOrderRating(
+    String orderId,
+    int rating,
+    String? comment,
+  ) async {
+    final cleanComment = Validators.sanitizeText(comment ?? '');
+    await _database.ref('orders/$orderId').update({
+      'rating': rating.clamp(1, 5),
+      if (cleanComment.isNotEmpty) 'ratingComment': cleanComment,
+      'ratedAt': DateTime.now().toIso8601String(),
     });
   }
 }

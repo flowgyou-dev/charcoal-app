@@ -24,6 +24,8 @@ class CharcoalOrder {
   final String createdAt;
   final String? outForDeliveryAt;
   final String? deliveredAt;
+  final int? rating;
+  final String? ratingComment;
 
   CharcoalOrder({
     required this.id,
@@ -51,6 +53,8 @@ class CharcoalOrder {
     required this.createdAt,
     this.outForDeliveryAt,
     this.deliveredAt,
+    this.rating,
+    this.ratingComment,
   }) : subtotalAmount = subtotalAmount ?? (sacksOrdered * pricePerUnit);
 
   Map<String, dynamic> toMap() {
@@ -113,6 +117,8 @@ class CharcoalOrder {
       driverName: map['driverName']?.toString(),
       driverPhone: map['driverPhone']?.toString(),
       createdAt: map['createdAt']?.toString() ?? DateTime.now().toIso8601String(),
+      rating: int.tryParse(map['rating']?.toString() ?? ''),
+      ratingComment: map['ratingComment']?.toString(),
       outForDeliveryAt: map['outForDeliveryAt']?.toString(),
       deliveredAt: map['deliveredAt']?.toString(),
     );

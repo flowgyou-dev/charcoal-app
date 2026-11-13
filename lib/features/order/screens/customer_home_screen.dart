@@ -41,6 +41,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   final MapController _mapController = MapController();
 
   int _quantity = 1;
+  int _maxOrderSacks = 50;
   bool _isOrdering = false;
   bool _isLocating = false;
   bool _isSearchingAddress = false;
@@ -235,6 +236,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       return;
     }
 
+    if (_quantity > _maxOrderSacks) {
+      _showSnack('Maximum $_maxOrderSacks sacks allowed per order.');
+      return;
+    }
+
     if (_paymentMethod == 'ONLINE_QR' &&
         (_scannedReceipt == null || _scannedReceipt!.refNumber.isEmpty)) {
       _showSnack('Please upload and scan your payment receipt before placing the order.');
@@ -369,14 +375,32 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           IconButton(
             icon: const Icon(Icons.receipt_long, color: Colors.white),
             tooltip: 'My Orders',
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final prefill = await Navigator.push<Map<String, dynamic>>(
                 context,
                 MaterialPageRoute(
                   builder: (_) =>
                       CustomerOrdersScreen(customerId: widget.currentUser.uid),
                 ),
               );
+              if (prefill != null && mounted) {
+                setState(() {
+                  _quantity = (prefill['sacks'] as int?) ?? _quantity;
+                  final addr = prefill['address']?.toString();
+                  if (addr != null && addr.isNotEmpty) {
+                    _addressCtrl.text = addr;
+                  }
+                  final lat = prefill['lat'] as double?;
+                  final lng = prefill['lng'] as double?;
+                  if (lat != null && lng != null) {
+                    _pinnedLocation = LatLng(lat, lng);
+                  }
+                });
+                _showSnack(
+                  'Previous order details loaded!',
+                  backgroundColor: AppTheme.emeraldGreen,
+                );
+              }
             },
           ),
           IconButton(
@@ -439,9 +463,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   );
                 }
 
-                final safeQty = inv.currentStock <= 0
+                _maxOrderSacks = settings.maxOrderSacks;
+                final maxAllowed = inv.currentStock < settings.maxOrderSacks
+                    ? inv.currentStock
+                    : settings.maxOrderSacks;
+                final safeQty = maxAllowed <= 0
                     ? 1
-                    : _quantity.clamp(1, inv.currentStock);
+                    : _quantity.clamp(1, maxAllowed);
                 final distKm = settings.distanceFromHubKm(
                   _pinnedLocation.latitude,
                   _pinnedLocation.longitude,
@@ -676,7 +704,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           size: 18,
                           color: AppTheme.inkCharcoal,
                         ),
-                        onPressed: safeQty < inv.currentStock
+                        onPressed: safeQty < (inv.currentStock < _maxOrderSacks ? inv.currentStock : _maxOrderSacks)
                             ? () => setState(() => _quantity = safeQty + 1)
                             : null,
                       ),

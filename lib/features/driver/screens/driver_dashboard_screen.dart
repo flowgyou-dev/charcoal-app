@@ -28,6 +28,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
   bool _isGpsOn = false;
   int _selectedTab = 0; // 0 = Active, 1 = Completed History
+  bool _completedTodayOnly = true;
   final Set<String> _busyOrderIds = {};
   final Set<String> _knownActiveOrderIds = {};
   bool _hasSeededAssignments = false;
@@ -376,8 +377,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     .where((o) => o.paymentMethod != 'ONLINE_QR')
                     .fold<double>(0.0, (sum, o) => sum + o.totalAmount);
 
+                final filteredCompleted = _completedTodayOnly
+                    ? todayDelivered.toList()
+                    : completedOrders;
                 final shownOrders =
-                    _selectedTab == 0 ? activeOrders : completedOrders;
+                    _selectedTab == 0 ? activeOrders : filteredCompleted;
+                final completedSacks = filteredCompleted.fold<int>(
+                    0, (sum, o) => sum + o.sacksOrdered);
+                final completedCodRemit = filteredCompleted
+                    .where((o) => o.paymentMethod != 'ONLINE_QR')
+                    .fold<double>(0.0, (sum, o) => sum + o.totalAmount);
 
                 return Column(
                   children: [
@@ -417,6 +426,84 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                         ),
                       ),
                     _buildTabs(activeOrders.length, completedOrders.length),
+                    if (_selectedTab == 1)
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardWhite,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.surfaceBorder),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.payments_outlined,
+                                    size: 16, color: AppTheme.headerForest),
+                                const SizedBox(width: 6),
+                                const Expanded(
+                                  child: Text(
+                                    'COD Remittance Summary',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.inkCharcoal,
+                                    ),
+                                  ),
+                                ),
+                                ChoiceChip(
+                                  label: const Text('Today',
+                                      style: TextStyle(fontSize: 11)),
+                                  selected: _completedTodayOnly,
+                                  onSelected: (_) =>
+                                      setState(() => _completedTodayOnly = true),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                                const SizedBox(width: 6),
+                                ChoiceChip(
+                                  label: const Text('All Time',
+                                      style: TextStyle(fontSize: 11)),
+                                  selected: !_completedTodayOnly,
+                                  onSelected: (_) => setState(
+                                      () => _completedTodayOnly = false),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Deliveries: ${filteredCompleted.length}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.mutedSlate,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  'Sacks: $completedSacks',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.mutedSlate,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  'COD Remit: ₱${completedCodRemit.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.emeraldGreen,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     Expanded(
                       child: shownOrders.isEmpty
                           ? _buildEmptyState(_selectedTab == 0)

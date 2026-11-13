@@ -11,6 +11,8 @@ import {
   XCircle,
   AlertCircle,
   X,
+  Download,
+  Printer,
 } from 'lucide-react';
 
 export default function Orders() {
@@ -30,6 +32,9 @@ export default function Orders() {
   // Cancel confirmation modal
   const [cancelTargetOrder, setCancelTargetOrder] = useState(null);
   const [cancelReason, setCancelReason] = useState('Cancelled by Admin');
+
+  // Printable Waybill modal
+  const [waybillOrder, setWaybillOrder] = useState(null);
 
   const ALLOWED_STATUSES = ['Pending', 'Confirmed', 'Out for Delivery', 'Delivered', 'Cancelled'];
 
@@ -279,6 +284,52 @@ export default function Orders() {
                 Clear Date
               </button>
             )}
+            <button
+              type="button"
+              disabled={filteredOrders.length === 0}
+              onClick={() => {
+                const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+                const headers = [
+                  'Order ID',
+                  'Date',
+                  'Customer Name',
+                  'Customer Phone',
+                  'Delivery Address',
+                  'Sacks',
+                  'Total Amount',
+                  'Payment Method',
+                  'Payment Status',
+                  'Driver',
+                  'Status',
+                ];
+                const rows = filteredOrders.map((o) => [
+                  o.displayId || o.id,
+                  o.createdAt ? new Date(o.createdAt).toLocaleString() : '',
+                  o.customerName || 'Customer',
+                  o.customerPhone || '',
+                  o.deliveryAddress || '',
+                  o.sacksOrdered || 1,
+                  o.totalAmount || 0,
+                  o.paymentMethod || 'COD',
+                  o.paymentStatus || 'Unpaid',
+                  o.driverName || 'Unassigned',
+                  o.status || 'Pending',
+                ]);
+                const csv = [headers, ...rows].map((r) => r.map(esc).join(',')).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `charcoal-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="px-3.5 py-2 bg-charcoal-header hover:bg-charcoal-dark disabled:opacity-40 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap"
+              title="Export filtered orders to CSV"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export CSV
+            </button>
           </div>
         </div>
       </div>
@@ -447,6 +498,14 @@ export default function Orders() {
                             Cancel
                           </button>
                         )}
+                        <button
+                          type="button"
+                          onClick={() => setWaybillOrder(order)}
+                          className="p-1.5 bg-charcoal-canvas hover:bg-charcoal-header border border-charcoal-border text-charcoal-ink hover:text-white rounded-lg inline-flex items-center justify-center"
+                          title="Print Delivery Waybill"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                        </button>
                       </td>
                     </tr>
                   );
@@ -587,6 +646,125 @@ export default function Orders() {
               >
                 Confirm Cancel &amp; Restore Stock
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Printable Delivery Waybill Modal */}
+      {waybillOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white border border-charcoal-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden text-charcoal-ink">
+            <div className="px-5 py-4 bg-charcoal-header text-white flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-base">Delivery Waybill</h3>
+                <p className="text-[11px] text-white/75 font-mono">
+                  {waybillOrder.displayId || waybillOrder.id}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWaybillOrder(null)}
+                className="p-1.5 rounded-lg hover:bg-white/15"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-3 text-xs">
+              <div className="p-3 rounded-xl bg-charcoal-canvas border border-charcoal-border space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-charcoal-muted">Customer:</span>
+                  <span className="font-bold">{waybillOrder.customerName || 'Customer'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-charcoal-muted">Phone:</span>
+                  <span className="font-mono">{waybillOrder.customerPhone || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-charcoal-muted block">Delivery Address:</span>
+                  <span className="font-semibold">{waybillOrder.deliveryAddress || 'N/A'}</span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-charcoal-canvas border border-charcoal-border space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-charcoal-muted">Quantity:</span>
+                  <span className="font-bold">{waybillOrder.sacksOrdered || 1} Sack(s)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-charcoal-muted">Delivery Fee:</span>
+                  <span className="font-mono">₱ {Number(waybillOrder.deliveryFee || 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between border-t border-charcoal-border pt-1.5 text-sm">
+                  <span className="font-bold">Total Amount:</span>
+                  <span className="font-mono font-black text-charcoal-eco">
+                    ₱ {Number(waybillOrder.totalAmount || 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-charcoal-muted">Payment:</span>
+                  <span className="font-bold">
+                    {waybillOrder.paymentMethod === 'ONLINE_QR'
+                      ? `ONLINE QR (${waybillOrder.paymentStatus || 'Paid'})`
+                      : `COD (${waybillOrder.paymentStatus || 'Unpaid'})`}
+                  </span>
+                </div>
+                {waybillOrder.driverName && (
+                  <div className="flex justify-between">
+                    <span className="text-charcoal-muted">Assigned Driver:</span>
+                    <span className="font-semibold">{waybillOrder.driverName}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setWaybillOrder(null)}
+                  className="px-4 py-2 bg-charcoal-canvas border border-charcoal-border rounded-xl font-semibold"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const o = waybillOrder;
+                    const win = window.open('', '_blank', 'width=420,height=640');
+                    if (!win) return;
+                    win.document.write(`
+                      <html><head><title>Waybill ${o.displayId || o.id}</title>
+                      <style>
+                        body { font-family: monospace; padding: 20px; color: #111; }
+                        h2 { margin: 0 0 4px; }
+                        .line { border-top: 1px dashed #666; margin: 10px 0; }
+                        .row { display: flex; justify-content: space-between; margin: 4px 0; }
+                        .sig { margin-top: 32px; border-top: 1px solid #111; padding-top: 4px; text-align: center; font-size: 11px; }
+                      </style></head><body>
+                      <h2>CHARCOAL EXPRESS</h2>
+                      <div>Order: <b>${o.displayId || o.id}</b></div>
+                      <div>Date: ${o.createdAt ? new Date(o.createdAt).toLocaleString() : '—'}</div>
+                      <div class="line"></div>
+                      <div><b>Customer:</b> ${o.customerName || 'Customer'}</div>
+                      <div><b>Phone:</b> ${o.customerPhone || 'N/A'}</div>
+                      <div><b>Address:</b> ${o.deliveryAddress || 'N/A'}</div>
+                      <div class="line"></div>
+                      <div class="row"><span>Sacks Ordered:</span><span><b>${o.sacksOrdered || 1}</b></span></div>
+                      <div class="row"><span>Delivery Fee:</span><span>₱ ${Number(o.deliveryFee || 0).toFixed(2)}</span></div>
+                      <div class="row"><span><b>TOTAL:</b></span><span><b>₱ ${Number(o.totalAmount || 0).toFixed(2)}</b></span></div>
+                      <div class="row"><span>Payment:</span><span>${o.paymentMethod === 'ONLINE_QR' ? 'ONLINE QR' : 'COD'} (${o.paymentStatus || 'Unpaid'})</span></div>
+                      ${o.driverName ? `<div class="row"><span>Driver:</span><span>${o.driverName}</span></div>` : ''}
+                      <div class="sig">Customer Signature / Received By</div>
+                      <script>window.onload = function(){ window.print(); }</script>
+                      </body></html>
+                    `);
+                    win.document.close();
+                  }}
+                  className="px-4 py-2 bg-charcoal-header hover:bg-charcoal-dark text-white rounded-xl font-bold flex items-center gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Print Slip
+                </button>
+              </div>
             </div>
           </div>
         </div>

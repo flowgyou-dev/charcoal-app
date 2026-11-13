@@ -44,7 +44,11 @@ export default function Dashboard({ setActiveTab }) {
       (snap) => {
         if (snap.exists()) {
           const val = snap.val();
-          const list = Object.keys(val).map((key) => ({ id: key, ...val[key] }));
+          const list = Object.keys(val).map((key) => ({
+            ...val[key],
+            id: key,
+            displayId: val[key]?.id || key,
+          }));
           list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
           setOrders(list);
         } else {
