@@ -18,6 +18,7 @@ const GENERIC_CATCHALL_SUFFIXES = new Set([
 ]);
 
 const EXACT_PROVIDERS = new Set([
+  'charcoal.com',
   ...(recognizedDomains.public_email_providers || []).map((d) => d.toLowerCase()),
   ...(recognizedDomains.regional_and_isp_providers || []).map((d) => d.toLowerCase()),
 ]);
