@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ref, onValue, set } from 'firebase/database';
 import { db } from '../firebase';
-import { Package, TrendingUp, Truck, AlertTriangle, ArrowUpRight, Wifi, WifiOff } from 'lucide-react';
+import { Package, TrendingUp, Truck, AlertTriangle, ArrowUpRight, Wifi, WifiOff, Thermometer, Droplets } from 'lucide-react';
 
 export default function Dashboard({ setActiveTab }) {
   const [stock, setStock] = useState(null);
@@ -10,6 +10,7 @@ export default function Dashboard({ setActiveTab }) {
   const [isDbConnected, setIsDbConnected] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [envSensor, setEnvSensor] = useState(null);
 
   useEffect(() => {
     const unsubConn = onValue(ref(db, '.info/connected'), (snap) => {
@@ -76,11 +77,18 @@ export default function Dashboard({ setActiveTab }) {
       (err) => setLoadError(err.message || 'Unable to load drivers.')
     );
 
+    const unsubSensor = onValue(
+      ref(db, 'sensors/warehouse_env'),
+      (snap) => setEnvSensor(snap.exists() ? snap.val() : null),
+      () => {}
+    );
+
     return () => {
       unsubConn();
       unsubInv();
       unsubOrders();
       unsubDrivers();
+      unsubSensor();
     };
   }, []);
 
@@ -120,6 +128,46 @@ export default function Dashboard({ setActiveTab }) {
           >
             {isDbConnected ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
             {isDbConnected ? 'Realtime DB Connected' : 'Offline — Reconnecting'}
+          </span>
+        </div>
+      </div>
+
+      {/* Warehouse Environment (ESP32 + DHT22) */}
+      <div className="bg-white border border-charcoal-border rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-charcoal-canvas border border-charcoal-border flex items-center justify-center text-charcoal-header">
+            <Thermometer className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-charcoal-ink">Warehouse Environment (ESP32 + DHT22)</p>
+            <p className="text-xs text-charcoal-muted">
+              {envSensor?.updatedAt
+                ? `Last updated: ${new Date(envSensor.updatedAt).toLocaleTimeString()}`
+                : 'Waiting for ESP32 sensor data (/sensors/warehouse_env)'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 bg-charcoal-canvas px-3 py-1.5 rounded-xl border border-charcoal-border">
+            <Thermometer className="w-4 h-4 text-amber-600" />
+            <span className="font-mono font-bold text-sm text-charcoal-ink">
+              {envSensor?.temperatureC != null ? `${Number(envSensor.temperatureC).toFixed(1)} °C` : '-- °C'}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-charcoal-canvas px-3 py-1.5 rounded-xl border border-charcoal-border">
+            <Droplets className="w-4 h-4 text-sky-600" />
+            <span className="font-mono font-bold text-sm text-charcoal-ink">
+              {envSensor?.humidityPct != null ? `${Number(envSensor.humidityPct).toFixed(1)} %` : '-- %'}
+            </span>
+          </div>
+          <span
+            className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+              envSensor?.temperatureC != null
+                ? 'bg-[#E8F3EC] text-charcoal-eco border-[#B7DFC7]'
+                : 'bg-amber-50 text-amber-800 border-amber-200'
+            }`}
+          >
+            {envSensor?.temperatureC != null ? 'Live' : 'Waiting'}
           </span>
         </div>
       </div>
