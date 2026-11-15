@@ -18,13 +18,21 @@ import '../../inventory/services/inventory_service.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../services/order_service.dart';
 import '../services/receipt_ocr_service.dart';
+import '../widgets/delivery_address_sheet.dart';
 import 'customer_orders_screen.dart';
 import 'customer_tracking_screen.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   final AppUser currentUser;
+  final bool embedded;
+  final Map<String, dynamic>? initialPrefill;
 
-  const CustomerHomeScreen({super.key, required this.currentUser});
+  const CustomerHomeScreen({
+    super.key,
+    required this.currentUser,
+    this.embedded = false,
+    this.initialPrefill,
+  });
 
   @override
   State<CustomerHomeScreen> createState() => _CustomerHomeScreenState();
@@ -367,62 +375,30 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant CustomerHomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialPrefill != null &&
+        widget.initialPrefill != oldWidget.initialPrefill) {
+      final prefill = widget.initialPrefill!;
+      setState(() {
+        _quantity = (prefill['sacks'] as int?) ?? _quantity;
+        final addr = prefill['address']?.toString();
+        if (addr != null && addr.isNotEmpty) {
+          _addressCtrl.text = addr;
+          _userEditedAddress = true;
+        }
+        final lat = prefill['lat'] as double?;
+        final lng = prefill['lng'] as double?;
+        if (lat != null && lng != null) {
+          _pinnedLocation = LatLng(lat, lng);
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Order Charcoal'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.receipt_long, color: Colors.white),
-            tooltip: 'My Orders',
-            onPressed: () async {
-              final prefill = await Navigator.push<Map<String, dynamic>>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      CustomerOrdersScreen(customerId: widget.currentUser.uid),
-                ),
-              );
-              if (prefill != null && mounted) {
-                setState(() {
-                  _quantity = (prefill['sacks'] as int?) ?? _quantity;
-                  final addr = prefill['address']?.toString();
-                  if (addr != null && addr.isNotEmpty) {
-                    _addressCtrl.text = addr;
-                  }
-                  final lat = prefill['lat'] as double?;
-                  final lng = prefill['lng'] as double?;
-                  if (lat != null && lng != null) {
-                    _pinnedLocation = LatLng(lat, lng);
-                  }
-                });
-                _showSnack(
-                  'Previous order details loaded!',
-                  backgroundColor: AppTheme.emeraldGreen,
-                );
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.account_circle_outlined, color: Colors.white),
-            tooltip: 'Account & Settings',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProfileScreen(
-                    name: widget.currentUser.name,
-                    email: widget.currentUser.email,
-                    phone: widget.currentUser.phone,
-                    role: widget.currentUser.role,
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: ConnectionBanner(
+    final body = ConnectionBanner(
         child: StreamBuilder<ShopSettings>(
           stream: _settingsService.settingsStream,
           builder: (context, settingsSnap) {
@@ -551,7 +527,45 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             );
           },
         ),
+      );
+    if (widget.embedded) return body;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Order Charcoal'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.receipt_long, color: Colors.white),
+            tooltip: 'My Orders',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      CustomerOrdersScreen(customerId: widget.currentUser.uid),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.account_circle_outlined, color: Colors.white),
+            tooltip: 'Account & Settings',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileScreen(
+                    name: widget.currentUser.name,
+                    email: widget.currentUser.email,
+                    phone: widget.currentUser.phone,
+                    role: widget.currentUser.role,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
+      body: body,
     );
   }
 
@@ -895,6 +909,37 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ),
             ),
             const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.headerForest,
+                  side: const BorderSide(color: AppTheme.headerForest),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () async {
+                  final formatted = await DeliveryAddressSheet.show(
+                    context,
+                    initialAddress: _addressCtrl.text,
+                  );
+                  if (formatted != null && mounted) {
+                    setState(() {
+                      _addressCtrl.text = formatted;
+                      _userEditedAddress = true;
+                    });
+                  }
+                },
+                icon: const Icon(Icons.edit_location_alt_outlined, size: 18),
+                label: const Text(
+                  'Fill Complete Delivery Address Form',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
             TextField(
               controller: _addressCtrl,
               maxLength: 200,

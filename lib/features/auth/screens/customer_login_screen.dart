@@ -5,7 +5,7 @@ import '../services/auth_service.dart';
 import '../widgets/email_verification_dialog.dart';
 import '../widgets/password_reset_dialog.dart';
 import 'customer_register_screen.dart';
-import '../../order/screens/customer_home_screen.dart';
+import '../../order/screens/customer_shell_screen.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
 
@@ -64,7 +64,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => CustomerHomeScreen(currentUser: user)),
+          MaterialPageRoute(builder: (_) => CustomerShellScreen(currentUser: user)),
           (route) => false,
         );
       }
@@ -85,7 +85,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
       if (verifiedUser != null) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => CustomerHomeScreen(currentUser: verifiedUser)),
+          MaterialPageRoute(builder: (_) => CustomerShellScreen(currentUser: verifiedUser)),
           (route) => false,
         );
       } else {

@@ -6,20 +6,42 @@ import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/screens/role_select_screen.dart';
 import 'features/auth/services/auth_service.dart';
-import 'features/order/screens/customer_home_screen.dart';
+import 'features/order/screens/customer_shell_screen.dart';
 import 'features/driver/screens/driver_dashboard_screen.dart';
+
+void setupAppErrorHandling() {
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('[FlutterError] Caught framework error: ${details.exceptionAsString()}');
+    if (details.stack != null) {
+      debugPrint('[FlutterError] Stack: ${details.stack}');
+    }
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('[PlatformDispatcher] Caught unhandled startup/runtime error: $error');
+    debugPrint('[PlatformDispatcher] Stack: $stack');
+    return true;
+  };
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  setupAppErrorHandling();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e, stack) {
+    debugPrint('[FirebaseInit] Failed to initialize Firebase: $e\n$stack');
+    // Prevent silent native crash if Firebase init fails on startup
+  }
 
   if (!kIsWeb) {
     try {
       FirebaseDatabase.instance.setPersistenceEnabled(true);
-    } catch (_) {
+    } catch (e, stack) {
+      debugPrint('[FirebaseDatabase] Failed to enable persistence: $e\n$stack');
       // Safe fallback on unsupported desktop test targets
     }
   }
@@ -74,7 +96,7 @@ class AuthGate extends StatelessWidget {
 
         final session = snapshot.data;
         if (session?.role == 'customer' && session?.customer != null) {
-          return CustomerHomeScreen(currentUser: session!.customer!);
+          return CustomerShellScreen(currentUser: session!.customer!);
         }
         if (session?.role == 'driver' && session?.driver != null) {
           return DriverDashboardScreen(driverProfile: session!.driver!);

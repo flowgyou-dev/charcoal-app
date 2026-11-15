@@ -11,6 +11,7 @@ class ProfileScreen extends StatefulWidget {
   final String email;
   final String phone;
   final String role;
+  final bool embedded;
 
   const ProfileScreen({
     super.key,
@@ -18,6 +19,7 @@ class ProfileScreen extends StatefulWidget {
     required this.email,
     required this.phone,
     required this.role,
+    this.embedded = false,
   });
 
   @override
@@ -484,9 +486,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Account & Settings')),
-      body: ConnectionBanner(
+    final body = ConnectionBanner(
         child: ListView(
           padding: const EdgeInsets.all(18),
           children: [
@@ -548,23 +548,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onPressed: _handleEditProfile,
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppTheme.emeraldGreen.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppTheme.emeraldGreen.withValues(alpha: 0.35)),
-                      ),
-                      child: Text(
-                        'Role: ${widget.role.toUpperCase()}',
-                        style: const TextStyle(
-                          color: AppTheme.emeraldGreen,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -630,7 +613,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
-      ),
+      );
+    if (widget.embedded) return body;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Account & Settings')),
+      body: body,
     );
   }
 }

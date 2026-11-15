@@ -5,7 +5,7 @@ import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../widgets/email_verification_dialog.dart';
 import '../widgets/password_requirements_indicator.dart';
-import '../../order/screens/customer_home_screen.dart';
+import '../../order/screens/customer_shell_screen.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
 
@@ -103,7 +103,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
       if (verifiedUser != null) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => CustomerHomeScreen(currentUser: verifiedUser)),
+          MaterialPageRoute(builder: (_) => CustomerShellScreen(currentUser: verifiedUser)),
           (route) => false,
         );
       } else {

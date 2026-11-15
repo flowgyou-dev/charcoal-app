@@ -197,7 +197,7 @@ export default function Settings() {
         paymentAccountNumber: cleanAcctNum,
         updatedAt: new Date().toISOString(),
       });
-      setSuccess('Settings saved! Live checkout, delivery fees, QR code, at map hub ay updated na.');
+      setSuccess('Settings saved! Live checkout, delivery fees, QR code, and map hub are now updated.');
     } catch (err) {
       setError(err.message || 'Failed to save settings.');
     } finally {

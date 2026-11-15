@@ -578,6 +578,8 @@ export default function Drivers() {
                   <label className="block font-semibold mb-1">Driver Login Email</label>
                   <input
                     type="email"
+                    name="new_driver_email"
+                    autoComplete="off"
                     required
                     maxLength={100}
                     value={email}
@@ -591,6 +593,8 @@ export default function Drivers() {
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
+                      name="new_driver_password"
+                      autoComplete="new-password"
                       required
                       maxLength={64}
                       value={password}
@@ -613,6 +617,8 @@ export default function Drivers() {
                   <div className="relative">
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
+                      name="new_driver_confirm_password"
+                      autoComplete="new-password"
                       required
                       maxLength={64}
                       value={confirmPassword}

@@ -9,8 +9,15 @@ import 'customer_tracking_screen.dart';
 
 class CustomerOrdersScreen extends StatefulWidget {
   final String customerId;
+  final bool embedded;
+  final void Function(Map<String, dynamic> prefill)? onOrderAgain;
 
-  const CustomerOrdersScreen({super.key, required this.customerId});
+  const CustomerOrdersScreen({
+    super.key,
+    required this.customerId,
+    this.embedded = false,
+    this.onOrderAgain,
+  });
 
   @override
   State<CustomerOrdersScreen> createState() => _CustomerOrdersScreenState();
@@ -54,9 +61,11 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
 
   Future<void> _promptCancelOrder(CharcoalOrder order) async {
     final reasonCtrl = TextEditingController();
+    String? reasonError;
     final selectedReason = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
         backgroundColor: AppTheme.cardWhite,
         title: Text(
           'Cancel ${order.id}?',
@@ -77,10 +86,11 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
             TextField(
               controller: reasonCtrl,
               maxLength: 120,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Reason for cancellation (optional)',
                 hintText: 'e.g. Wrong delivery address',
                 counterText: '',
+                errorText: reasonError,
               ),
             ),
           ],
@@ -93,6 +103,15 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
             onPressed: () {
+              final err = Validators.validateOptionalText(
+                reasonCtrl.text,
+                label: 'Reason',
+                max: 120,
+              );
+              if (err != null) {
+                setDialogState(() => reasonError = err);
+                return;
+              }
               final text = Validators.sanitizeText(reasonCtrl.text);
               Navigator.pop(
                 ctx,
@@ -102,6 +121,7 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
             child: const Text('Cancel Order'),
           ),
         ],
+      ),
       ),
     );
     reasonCtrl.dispose();
@@ -133,9 +153,7 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('My Orders')),
-      body: ConnectionBanner(
+    final body = ConnectionBanner(
         child: StreamBuilder<List<CharcoalOrder>>(
           stream: _orderService.streamCustomerOrders(widget.customerId),
           builder: (context, snapshot) {
@@ -347,12 +365,17 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
                                     ),
                                   ),
                                   onPressed: () {
-                                    Navigator.pop(context, {
+                                    final prefill = {
                                       'sacks': o.sacksOrdered,
                                       'address': o.deliveryAddress,
                                       'lat': o.deliveryLat,
                                       'lng': o.deliveryLng,
-                                    });
+                                    };
+                                    if (widget.onOrderAgain != null) {
+                                      widget.onOrderAgain!(prefill);
+                                    } else {
+                                      Navigator.pop(context, prefill);
+                                    }
                                   },
                                   icon: const Icon(Icons.replay, size: 16),
                                   label: const Text(
@@ -404,12 +427,17 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
             );
           },
         ),
-      ),
+      );
+    if (widget.embedded) return body;
+    return Scaffold(
+      appBar: AppBar(title: const Text('My Orders')),
+      body: body,
     );
   }
 
   Future<void> _promptRateOrder(CharcoalOrder order) async {
     int selectedStars = 5;
+    String? commentError;
     final commentCtrl = TextEditingController();
 
     final submitted = await showDialog<bool>(
@@ -439,9 +467,10 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
                 controller: commentCtrl,
                 maxLength: 200,
                 maxLines: 2,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Optional feedback (e.g. Fast delivery!)',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  errorText: commentError,
                 ),
               ),
             ],
@@ -452,7 +481,18 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
+              onPressed: () {
+                final err = Validators.validateOptionalText(
+                  commentCtrl.text,
+                  label: 'Feedback',
+                  max: 200,
+                );
+                if (err != null) {
+                  setDialogState(() => commentError = err);
+                  return;
+                }
+                Navigator.pop(ctx, true);
+              },
               child: const Text('Submit'),
             ),
           ],

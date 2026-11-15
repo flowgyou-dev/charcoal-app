@@ -135,8 +135,11 @@ class Validators {
 
   static String? validateStrongPassword(String? value) {
     final pass = value ?? '';
-    if (pass.isEmpty) {
+    if (pass.trim().isEmpty) {
       return 'Please enter a Password.';
+    }
+    if (pass.contains(' ')) {
+      return 'Password cannot contain spaces.';
     }
     if (pass.length < 8) {
       return 'Password must be at least 8 characters.';
@@ -159,7 +162,7 @@ class Validators {
   static String? validateConfirmPassword(String? password, String? confirmPassword) {
     final pass = password ?? '';
     final confirm = confirmPassword ?? '';
-    if (confirm.isEmpty) {
+    if (confirm.trim().isEmpty) {
       return 'Please confirm your Password.';
     }
     if (pass != confirm) {
@@ -202,6 +205,46 @@ class Validators {
     }
     if (quantity > currentStock) {
       return 'Sorry, only $currentStock sack(s) remaining in stock.';
+    }
+    return null;
+  }
+
+  /// True when the value is null, empty, or contains only whitespace.
+  static bool isBlank(String? value) => (value ?? '').trim().isEmpty;
+
+  /// Required free-text field: rejects empty and whitespace-only input.
+  static String? validateRequiredText(
+    String? value, {
+    String label = 'This field',
+    int min = 1,
+    int max = 200,
+  }) {
+    final clean = sanitizeText(value ?? '');
+    if (clean.isEmpty) {
+      return '$label is required.';
+    }
+    if (clean.length < min) {
+      return '$label must be at least $min characters.';
+    }
+    if (clean.length > max) {
+      return '$label cannot exceed $max characters.';
+    }
+    return null;
+  }
+
+  /// Optional free-text field: empty is allowed, but whitespace-only is rejected.
+  static String? validateOptionalText(
+    String? value, {
+    String label = 'This field',
+    int max = 200,
+  }) {
+    final raw = value ?? '';
+    if (raw.isEmpty) return null;
+    if (raw.trim().isEmpty) {
+      return '$label cannot contain spaces only.';
+    }
+    if (sanitizeText(raw).length > max) {
+      return '$label cannot exceed $max characters.';
     }
     return null;
   }

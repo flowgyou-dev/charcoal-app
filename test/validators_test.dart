@@ -180,5 +180,23 @@ void main() {
       expect(Validators.validateOrderQuantity(11, 10), isNotNull);
       expect(Validators.validateOrderQuantity(5, 10), isNull);
     });
+
+    test('whitespace-only inputs are rejected across validators', () {
+      expect(Validators.isBlank('   '), isTrue);
+      expect(Validators.isBlank('\t\n '), isTrue);
+      expect(Validators.isBlank('ok'), isFalse);
+
+      expect(Validators.validateRequiredText('   ', label: 'Street'), isNotNull);
+      expect(Validators.validateRequiredText('Blk 4 Lot 2', label: 'Street', min: 4), isNull);
+
+      expect(Validators.validateOptionalText('', label: 'Note'), isNull);
+      expect(Validators.validateOptionalText('   ', label: 'Note'), isNotNull);
+      expect(Validators.validateOptionalText('Near gate', label: 'Note'), isNull);
+
+      expect(Validators.validateName('   '), isNotNull);
+      expect(Validators.validateAddress('          '), isNotNull);
+      expect(Validators.validateStrongPassword('        '), isNotNull);
+      expect(Validators.validateLoginPassword('   '), isNotNull);
+    });
   });
 }
