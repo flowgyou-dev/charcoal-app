@@ -201,6 +201,11 @@ export default function App() {
     { id: 'settings', name: 'Shop & QR Settings', icon: SettingsIcon },
   ];
 
+  const navigateToTab = (tabId) => {
+    setFocusedOrderId(null);
+    setActiveTab(tabId);
+  };
+
   const handleSelectOrderFromDashboard = (orderId) => {
     setFocusedOrderId(orderId);
     setActiveTab('orders');
@@ -211,7 +216,7 @@ export default function App() {
       case 'dashboard':
         return (
           <Dashboard
-            setActiveTab={setActiveTab}
+            setActiveTab={navigateToTab}
             onSelectOrder={handleSelectOrderFromDashboard}
           />
         );
@@ -240,7 +245,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex min-h-screen bg-charcoal-canvas text-charcoal-ink font-sans">
+    <div className="flex h-screen overflow-hidden bg-charcoal-canvas text-charcoal-ink font-sans">
       {mobileMenuOpen && (
         <div
           onClick={() => setMobileMenuOpen(false)}
@@ -248,10 +253,10 @@ export default function App() {
         />
       )}
 
-      {/* Sidebar Navigation */}
+      {/* Frozen Sidebar Navigation */}
       <aside
         className={`
-        fixed lg:static top-0 bottom-0 left-0 z-50 w-64 bg-charcoal-sidebar border-r border-charcoal-hover p-4 flex flex-col justify-between transition-transform duration-200 ease-in-out text-white
+        fixed lg:static top-0 bottom-0 left-0 z-50 w-64 h-screen shrink-0 overflow-y-auto bg-charcoal-sidebar border-r border-charcoal-hover p-4 flex flex-col justify-between transition-transform duration-200 ease-in-out text-white
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}
       >
@@ -303,7 +308,7 @@ export default function App() {
                 <button
                   key={item.id}
                   onClick={() => {
-                    setActiveTab(item.id);
+                    navigateToTab(item.id);
                     setMobileMenuOpen(false);
                   }}
                   className={`
@@ -344,8 +349,8 @@ export default function App() {
       </aside>
 
       {/* Main Content Pane */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-16 border-b border-charcoal-hover bg-charcoal-header text-white px-4 sm:px-8 flex items-center justify-between">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        <header className="h-16 shrink-0 border-b border-charcoal-hover bg-charcoal-header text-white px-4 sm:px-8 flex items-center justify-between">
           <button
             onClick={() => setMobileMenuOpen(true)}
             className="lg:hidden p-2 text-[#CBD5D4] hover:text-white rounded-lg hover:bg-charcoal-hover"
@@ -407,7 +412,7 @@ export default function App() {
                         <button
                           key={alert.id}
                           onClick={() => {
-                            setActiveTab(alert.tab);
+                            navigateToTab(alert.tab);
                             setShowAlerts(false);
                           }}
                           className="w-full text-left p-3.5 hover:bg-charcoal-canvas flex items-start gap-2.5 transition-colors"

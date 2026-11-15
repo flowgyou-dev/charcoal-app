@@ -45,6 +45,9 @@ export default function Orders({ focusedOrderId = null, onClearFocusedOrder }) {
       setDateFilter('');
       setSearchQuery(focusedOrderId);
       setCurrentPage(1);
+    } else {
+      setSearchQuery('');
+      setCurrentPage(1);
     }
   }, [focusedOrderId]);
 
@@ -255,7 +258,10 @@ export default function Orders({ focusedOrderId = null, onClearFocusedOrder }) {
             {['ALL', 'PENDING', 'CONFIRMED', 'OUT FOR DELIVERY', 'DELIVERED', 'CANCELLED'].map((f) => (
               <button
                 key={f}
-                onClick={() => setFilter(f)}
+                onClick={() => {
+                  setFilter(f);
+                  setCurrentPage(1);
+                }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   filter === f
                     ? 'bg-charcoal-header text-white shadow-sm'
@@ -276,7 +282,10 @@ export default function Orders({ focusedOrderId = null, onClearFocusedOrder }) {
               type="text"
               maxLength={100}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               placeholder="Search order ID, customer, address, driver, or OCR Ref No..."
               className="w-full bg-white border border-charcoal-border rounded-xl pl-10 pr-4 py-2 text-xs text-charcoal-ink focus:outline-none focus:border-charcoal-header"
             />
@@ -285,7 +294,10 @@ export default function Orders({ focusedOrderId = null, onClearFocusedOrder }) {
             <input
               type="date"
               value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
+              onChange={(e) => {
+                setDateFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               className="bg-white border border-charcoal-border rounded-xl px-3 py-2 text-xs text-charcoal-ink focus:outline-none focus:border-charcoal-header"
             />
             {dateFilter && (
