@@ -3,7 +3,7 @@ import { ref, onValue, set } from 'firebase/database';
 import { db } from '../firebase';
 import { Package, TrendingUp, Truck, AlertTriangle, ArrowUpRight, Wifi, WifiOff, Thermometer, Droplets } from 'lucide-react';
 
-export default function Dashboard({ setActiveTab }) {
+export default function Dashboard({ setActiveTab, onSelectOrder }) {
   const [stock, setStock] = useState(null);
   const [orders, setOrders] = useState([]);
   const [drivers, setDrivers] = useState([]);
@@ -308,7 +308,12 @@ export default function Dashboard({ setActiveTab }) {
               </thead>
               <tbody className="divide-y divide-charcoal-border">
                 {orders.slice(0, 6).map((order) => (
-                  <tr key={order.id} className="hover:bg-[#F8FAFA] transition-colors">
+                  <tr
+                    key={order.id}
+                    onClick={() => (onSelectOrder ? onSelectOrder(order.id) : setActiveTab('orders'))}
+                    title="Click to inspect or manage this order"
+                    className="hover:bg-[#E8F3EC]/50 cursor-pointer transition-colors"
+                  >
                     <td className="py-3.5 px-5 font-mono font-bold text-charcoal-header">{order.id}</td>
                     <td className="py-3.5 px-5 font-semibold text-charcoal-ink">{order.customerName || 'Customer'}</td>
                     <td className="py-3.5 px-5 text-charcoal-muted max-w-[200px] truncate">{order.deliveryAddress || 'Address'}</td>

@@ -27,7 +27,61 @@ import {
   Eye,
   EyeOff,
   Trash2,
+  Copy,
 } from 'lucide-react';
+import Pagination from '../components/Pagination';
+
+const VEHICLE_CATALOG = {
+  Motorcycle: {
+    Honda: {
+      models: ['Wave 110', 'TMX 125 Alpha', 'Click 125i', 'Click 160', 'Beat 110', 'XRM 125'],
+      ccs: ['110cc', '125cc', '150cc', '160cc'],
+    },
+    Yamaha: {
+      models: ['Mio i 125', 'Sight 115', 'Sniper 155', 'NMAX 155', 'Aerox 155'],
+      ccs: ['115cc', '125cc', '150cc', '155cc'],
+    },
+    Suzuki: {
+      models: ['Smash 115', 'Raider J Crossover', 'Raider R150', 'Burgman Street 125'],
+      ccs: ['115cc', '125cc', '150cc'],
+    },
+    Kawasaki: {
+      models: ['Barako II 175', 'Bajaj CT100', 'Bajaj CT125', 'Rouser NS160'],
+      ccs: ['100cc', '125cc', '160cc', '175cc'],
+    },
+    Rusi: {
+      models: ['MP 110', 'Macho 125', 'TC 150', 'Classic 250'],
+      ccs: ['110cc', '125cc', '150cc', '250cc'],
+    },
+  },
+  'Elf Truck': {
+    Isuzu: {
+      models: ['NHR', 'NKR', 'NPR', 'NLR 77', 'NLR 85'],
+      ccs: ['2771cc', '2999cc', '4570cc', '4751cc'],
+    },
+    'Mitsubishi Fuso': {
+      models: ['Canter FE71', 'Canter FE73', 'Canter FE84', 'Canter FE85'],
+      ccs: ['2998cc', '3908cc', '4899cc'],
+    },
+    Hino: {
+      models: ['300 Series XZU600', '300 Series XZU710', 'Dutro 300'],
+      ccs: ['4009cc', '4899cc'],
+    },
+  },
+  L300: {
+    Mitsubishi: {
+      models: ['L300 FB Exceed', 'L300 Cab & Chassis', 'L300 Dropside'],
+      ccs: ['2268cc (4N14)', '2477cc (4D56)'],
+    },
+  },
+};
+
+function generateDefaultDriverPassword(lname, plate) {
+  const cleanLast = sanitizeText(lname).replace(/\s+/g, '');
+  const cleanPlate = formatPlateNumber(plate).replace(/-/g, '').replace(/\s+/g, '');
+  if (!cleanLast || !cleanPlate) return '';
+  return `${cleanLast}${cleanPlate}`;
+}
 
 export default function Drivers() {
   const [drivers, setDrivers] = useState([]);
@@ -41,18 +95,52 @@ export default function Drivers() {
   const [deleteDriverTarget, setDeleteDriverTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
-  const [vehicle, setVehicle] = useState('Motorcycle (Honda Wave 110)');
+  const [vehicleType, setVehicleType] = useState('Motorcycle');
+  const [vehicleBrand, setVehicleBrand] = useState('Honda');
+  const [vehicleModel, setVehicleModel] = useState('Wave 110');
+  const [vehicleCc, setVehicleCc] = useState('110cc');
   const [plateNumber, setPlateNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [manualPasswordOverride, setManualPasswordOverride] = useState(false);
+  const [copiedPass, setCopiedPass] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const passReqs = checkPasswordRequirements(password, confirmPassword);
+
+  const handleVehicleTypeChange = (nextType) => {
+    const brands = Object.keys(VEHICLE_CATALOG[nextType] || {});
+    const nextBrand = brands[0] || '';
+    const spec = VEHICLE_CATALOG[nextType]?.[nextBrand] || { models: [], ccs: [] };
+    setVehicleType(nextType);
+    setVehicleBrand(nextBrand);
+    setVehicleModel(spec.models[0] || '');
+    setVehicleCc(spec.ccs[0] || '');
+  };
+
+  const handleVehicleBrandChange = (nextBrand) => {
+    const spec = VEHICLE_CATALOG[vehicleType]?.[nextBrand] || { models: [], ccs: [] };
+    setVehicleBrand(nextBrand);
+    setVehicleModel(spec.models[0] || '');
+    setVehicleCc(spec.ccs[0] || '');
+  };
+
+  useEffect(() => {
+    if (!manualPasswordOverride) {
+      const autoPass = generateDefaultDriverPassword(lastName, plateNumber);
+      setPassword(autoPass);
+      setConfirmPassword(autoPass);
+    }
+  }, [lastName, plateNumber, manualPasswordOverride]);
 
   useEffect(() => {
     const unsubDrivers = onValue(
@@ -94,16 +182,26 @@ export default function Drivers() {
     if (isSubmitting) return;
     setFormError('');
 
-    const nameErr = validateName(name, 'Driver Name');
-    if (nameErr) return setFormError(nameErr);
+    const fnameErr = validateName(firstName, 'First Name', 2, 40);
+    if (fnameErr) return setFormError(fnameErr);
+
+    const cleanMiddle = sanitizeText(middleName);
+    if (cleanMiddle) {
+      const mnameErr = validateName(cleanMiddle, 'Middle Name', 1, 40);
+      if (mnameErr) return setFormError(mnameErr);
+    }
+
+    const lnameErr = validateName(lastName, 'Last Name', 2, 40);
+    if (lnameErr) return setFormError(lnameErr);
+
+    const fullName = [sanitizeText(firstName), cleanMiddle, sanitizeText(lastName)]
+      .filter(Boolean)
+      .join(' ');
 
     const phoneErr = validatePhPhone(phone);
     if (phoneErr) return setFormError(phoneErr);
 
-    const cleanVehicle = sanitizeText(vehicle);
-    if (!cleanVehicle || cleanVehicle.length < 2 || cleanVehicle.length > 60) {
-      return setFormError('Vehicle type must be 2–60 characters.');
-    }
+    const cleanVehicle = `${vehicleType} (${vehicleBrand} ${vehicleModel} ${vehicleCc})`.trim();
 
     const cleanPlate = formatPlateNumber(plateNumber);
     const plateErr = validatePlateNumber(cleanPlate);
@@ -112,8 +210,12 @@ export default function Drivers() {
     const emailErr = validateEmail(email);
     if (emailErr) return setFormError(emailErr);
 
-    const passErr = validateStrongPassword(password);
-    if (passErr) return setFormError(passErr);
+    if (!password || password.length < 8 || password.length > 64) {
+      return setFormError('Driver password must be 8–64 characters.');
+    }
+    if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+      return setFormError('Driver password must contain letters and numbers.');
+    }
 
     if (password !== confirmPassword) {
       return setFormError('Passwords do not match.');
@@ -123,7 +225,7 @@ export default function Drivers() {
     let secondaryApp = null;
     let createdAuthUser = null;
     try {
-      const cleanName = sanitizeText(name);
+      const cleanName = fullName;
       const cleanPhone = formatDigitsOnly(phone, 12);
       const cleanEmail = email.trim().toLowerCase();
 
@@ -136,8 +238,15 @@ export default function Drivers() {
       const payload = {
         uid: driverUid,
         name: cleanName,
+        firstName: sanitizeText(firstName),
+        middleName: cleanMiddle,
+        lastName: sanitizeText(lastName),
         phone: cleanPhone,
         vehicle: cleanVehicle,
+        vehicleType,
+        vehicleBrand,
+        vehicleModel,
+        vehicleCc,
         plateNumber: cleanPlate,
         email: cleanEmail,
         role: 'driver',
@@ -150,6 +259,9 @@ export default function Drivers() {
       await set(ref(db, `users/${driverUid}`), {
         uid: driverUid,
         name: cleanName,
+        firstName: sanitizeText(firstName),
+        middleName: cleanMiddle,
+        lastName: sanitizeText(lastName),
         phone: cleanPhone,
         email: cleanEmail,
         role: 'driver',
@@ -160,12 +272,16 @@ export default function Drivers() {
       await signOut(secondaryAuth);
       createdAuthUser = null;
 
-      setName('');
+      setFirstName('');
+      setMiddleName('');
+      setLastName('');
       setPhone('');
+      handleVehicleTypeChange('Motorcycle');
       setPlateNumber('');
       setEmail('');
       setPassword('');
       setConfirmPassword('');
+      setManualPasswordOverride(false);
       setShowPassword(false);
       setShowConfirmPassword(false);
       setShowCreateModal(false);
@@ -326,8 +442,16 @@ export default function Drivers() {
             setVehicle('Motorcycle (Honda Wave 110)');
             setPlateNumber('');
             setEmail('');
+            setFirstName('');
+            setMiddleName('');
+            setLastName('');
+            setPhone('');
+            handleVehicleTypeChange('Motorcycle');
+            setPlateNumber('');
+            setEmail('');
             setPassword('');
             setConfirmPassword('');
+            setManualPasswordOverride(false);
             setShowPassword(false);
             setShowConfirmPassword(false);
             setShowCreateModal(true);
@@ -370,6 +494,7 @@ export default function Drivers() {
             No driver accounts yet.
           </div>
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs min-w-[820px]">
               <thead className="bg-charcoal-header text-white font-semibold uppercase tracking-wider">
@@ -383,7 +508,9 @@ export default function Drivers() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-charcoal-border">
-                {drivers.map((driver) => {
+                {drivers
+                  .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                  .map((driver) => {
                   const isActive = driver.isActive !== false;
                   const activeCount = orders.filter(
                     (o) => o.driverId === driver.id && (o.status === 'Confirmed' || o.status === 'Out for Delivery')
@@ -505,15 +632,23 @@ export default function Drivers() {
               </tbody>
             </table>
           </div>
+          <Pagination
+            totalItems={drivers.length}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+          />
+          </>
         )}
       </div>
 
       {/* Create Driver Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white border border-charcoal-border rounded-2xl p-6 w-full max-w-lg shadow-2xl text-charcoal-ink">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white border border-charcoal-border rounded-2xl p-6 w-full max-w-xl shadow-2xl text-charcoal-ink my-8">
             <h3 className="font-bold text-lg text-charcoal-ink mb-1">Create New Delivery Driver</h3>
-            <p className="text-xs text-charcoal-muted mb-4">Fill out the driver details so they can log in to the mobile app.</p>
+            <p className="text-xs text-charcoal-muted mb-4">Fill out the driver details so they can log in to the Rider mobile app.</p>
 
             <form onSubmit={handleCreateDriver} className="space-y-4 text-xs">
               {formError && (
@@ -522,21 +657,49 @@ export default function Drivers() {
                   <span>{formError}</span>
                 </div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+              {/* Driver Name: First / Middle / Last */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-semibold mb-1">Driver Name</label>
+                  <label className="block font-semibold mb-1">First Name *</label>
                   <input
                     type="text"
                     required
-                    maxLength={60}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Cardo Dalisay"
+                    maxLength={40}
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Cardo"
                     className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-charcoal-header"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">Mobile / Telephone Number</label>
+                  <label className="block font-semibold mb-1">Middle Name</label>
+                  <input
+                    type="text"
+                    maxLength={40}
+                    value={middleName}
+                    onChange={(e) => setMiddleName(e.target.value)}
+                    placeholder="Optional"
+                    className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-charcoal-header"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">Last Name *</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={40}
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Dalisay"
+                    className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-charcoal-header"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1">Mobile / Telephone Number *</label>
                   <input
                     type="tel"
                     inputMode="numeric"
@@ -548,23 +711,11 @@ export default function Drivers() {
                     className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-charcoal-header"
                   />
                 </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold mb-1">Vehicle</label>
+                  <label className="block font-semibold mb-1">Plate Number *</label>
                   <input
                     type="text"
                     required
-                    maxLength={60}
-                    value={vehicle}
-                    onChange={(e) => setVehicle(e.target.value)}
-                    className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-charcoal-header"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold mb-1">Plate Number</label>
-                  <input
-                    type="text"
                     maxLength={9}
                     value={plateNumber}
                     onChange={(e) => setPlateNumber(formatPlateNumber(e.target.value))}
@@ -573,9 +724,73 @@ export default function Drivers() {
                   />
                 </div>
               </div>
+
+              {/* Vehicle Cascading Dropdowns */}
+              <div className="p-3 rounded-xl bg-charcoal-canvas/70 border border-charcoal-border space-y-3">
+                <p className="font-bold text-charcoal-ink">Vehicle Specification</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div>
+                    <label className="block font-semibold mb-1">Vehicle Type</label>
+                    <select
+                      value={vehicleType}
+                      onChange={(e) => handleVehicleTypeChange(e.target.value)}
+                      className="w-full bg-white border border-charcoal-border rounded-xl px-2.5 py-2 focus:outline-none focus:border-charcoal-header"
+                    >
+                      {Object.keys(VEHICLE_CATALOG).map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-semibold mb-1">Brand</label>
+                    <select
+                      value={vehicleBrand}
+                      onChange={(e) => handleVehicleBrandChange(e.target.value)}
+                      className="w-full bg-white border border-charcoal-border rounded-xl px-2.5 py-2 focus:outline-none focus:border-charcoal-header"
+                    >
+                      {Object.keys(VEHICLE_CATALOG[vehicleType] || {}).map((b) => (
+                        <option key={b} value={b}>
+                          {b}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-semibold mb-1">Model</label>
+                    <select
+                      value={vehicleModel}
+                      onChange={(e) => setVehicleModel(e.target.value)}
+                      className="w-full bg-white border border-charcoal-border rounded-xl px-2.5 py-2 focus:outline-none focus:border-charcoal-header"
+                    >
+                      {(VEHICLE_CATALOG[vehicleType]?.[vehicleBrand]?.models || []).map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-semibold mb-1">Engine CC</label>
+                    <select
+                      value={vehicleCc}
+                      onChange={(e) => setVehicleCc(e.target.value)}
+                      className="w-full bg-white border border-charcoal-border rounded-xl px-2.5 py-2 focus:outline-none focus:border-charcoal-header"
+                    >
+                      {(VEHICLE_CATALOG[vehicleType]?.[vehicleBrand]?.ccs || []).map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               <div className="pt-2 border-t border-charcoal-border space-y-3">
                 <div>
-                  <label className="block font-semibold mb-1">Driver Login Email</label>
+                  <label className="block font-semibold mb-1">Driver Login Email *</label>
                   <input
                     type="email"
                     name="new_driver_email"
@@ -589,71 +804,109 @@ export default function Drivers() {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">Assigned Password</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold">
+                      Default Password{' '}
+                      <span className="font-normal text-charcoal-muted">
+                        (Last Name + Plate # without -)
+                      </span>
+                    </label>
+                    <div className="flex items-center gap-2">
+                      {password && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard?.writeText(password);
+                            setCopiedPass(true);
+                            setTimeout(() => setCopiedPass(false), 1500);
+                          }}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-charcoal-eco hover:underline"
+                        >
+                          <Copy className="w-3 h-3" />
+                          {copiedPass ? 'Copied!' : 'Copy'}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setManualPasswordOverride((prev) => !prev)}
+                        className="text-[11px] font-semibold text-charcoal-header hover:underline"
+                      >
+                        {manualPasswordOverride ? 'Use Auto Default' : 'Customize'}
+                      </button>
+                    </div>
+                  </div>
                   <div className="relative">
                     <input
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword || !manualPasswordOverride ? 'text' : 'password'}
                       name="new_driver_password"
                       autoComplete="new-password"
                       required
+                      readOnly={!manualPasswordOverride}
                       maxLength={64}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Min 8 chars, uppercase, number, symbol"
-                      className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl pl-3.5 pr-10 py-2.5 font-mono focus:outline-none focus:border-charcoal-header"
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (!manualPasswordOverride) setConfirmPassword(e.target.value);
+                      }}
+                      placeholder="Enter Last Name & Plate Number to auto-generate"
+                      className={`w-full border border-charcoal-border rounded-xl pl-3.5 pr-10 py-2.5 font-mono focus:outline-none focus:border-charcoal-header ${
+                        manualPasswordOverride ? 'bg-charcoal-canvas' : 'bg-[#E8F3EC]/60 text-charcoal-header font-bold'
+                      }`}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-muted hover:text-charcoal-ink"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                    {manualPasswordOverride && (
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-muted hover:text-charcoal-ink"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    )}
                   </div>
                 </div>
-                <div>
-                  <label className="block font-semibold mb-1">Confirm Assigned Password</label>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      name="new_driver_confirm_password"
-                      autoComplete="new-password"
-                      required
-                      maxLength={64}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Re-enter assigned password"
-                      className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl pl-3.5 pr-10 py-2.5 font-mono focus:outline-none focus:border-charcoal-header"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword((prev) => !prev)}
-                      aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-muted hover:text-charcoal-ink"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  <div className="mt-2 p-2.5 rounded-xl bg-charcoal-canvas border border-charcoal-border grid grid-cols-2 gap-1.5 text-[11px]">
-                    {[
-                      { met: passReqs.hasMinLength, label: '8–64 characters' },
-                      { met: passReqs.hasUppercase, label: '1 uppercase letter' },
-                      { met: passReqs.hasNumber, label: '1 number' },
-                      { met: passReqs.hasSpecialChar, label: '1 special character' },
-                      { met: passReqs.passwordsMatch, label: 'Passwords match' },
-                    ].map((req) => (
-                      <div
-                        key={req.label}
-                        className={`flex items-center gap-1.5 ${
-                          req.met ? 'text-charcoal-eco font-semibold' : 'text-charcoal-muted'
-                        }`}
+                {manualPasswordOverride && (
+                  <div>
+                    <label className="block font-semibold mb-1">Confirm Assigned Password</label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        name="new_driver_confirm_password"
+                        autoComplete="new-password"
+                        required
+                        maxLength={64}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Re-enter assigned password"
+                        className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl pl-3.5 pr-10 py-2.5 font-mono focus:outline-none focus:border-charcoal-header"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                        aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-muted hover:text-charcoal-ink"
                       >
-                        <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 ${req.met ? 'opacity-100' : 'opacity-35'}`} />
-                        <span>{req.label}</span>
-                      </div>
-                    ))}
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
+                )}
+                <div className="p-2.5 rounded-xl bg-charcoal-canvas border border-charcoal-border grid grid-cols-3 gap-1.5 text-[11px]">
+                  {[
+                    { met: passReqs.hasMinLength, label: '8–64 chars' },
+                    { met: /[A-Za-z]/.test(password) && passReqs.hasNumber, label: 'Letters & numbers' },
+                    { met: passReqs.passwordsMatch, label: 'Confirmed' },
+                  ].map((req) => (
+                    <div
+                      key={req.label}
+                      className={`flex items-center gap-1.5 ${
+                        req.met ? 'text-charcoal-eco font-semibold' : 'text-charcoal-muted'
+                      }`}
+                    >
+                      <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 ${req.met ? 'opacity-100' : 'opacity-35'}`} />
+                      <span>{req.label}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2">

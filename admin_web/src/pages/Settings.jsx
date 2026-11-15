@@ -15,6 +15,7 @@ import {
   Trash2,
   CheckCircle2,
   AlertCircle,
+  Store,
 } from 'lucide-react';
 
 const hubPinIcon = L.divIcon({
@@ -152,15 +153,49 @@ export default function Settings() {
     }
   };
 
+  const handleLogoFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError('');
+    setSuccess('');
+
+    const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      setError('Please upload a PNG, JPG, or WEBP logo image.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Original logo image must be under 5 MB.');
+      return;
+    }
+
+    try {
+      const dataUrl = await compressImageToDataUrl(file, 360, 0.85);
+      setForm((prev) => ({ ...prev, systemLogo: dataUrl }));
+    } catch (err) {
+      setError(err.message || 'Could not process system logo image.');
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     if (saving) return;
     setError('');
     setSuccess('');
 
+    const cleanSystemName = sanitizeText(form.systemName || 'CharCoal Hub');
+    if (cleanSystemName.length < 2 || cleanSystemName.length > 60) {
+      return setError('System Name must be 2–60 characters.');
+    }
+
     const cleanHubName = sanitizeText(form.hubName);
     if (cleanHubName.length < 2 || cleanHubName.length > 100) {
       return setError('Warehouse / Hub name must be 2–100 characters.');
+    }
+
+    const cleanHubAddress = sanitizeText(form.hubAddress || '');
+    if (cleanHubAddress.length < 5 || cleanHubAddress.length > 200) {
+      return setError('Store / Warehouse address must be 5–200 characters.');
     }
 
     const flatErr = validatePositivePrice(form.flatDeliveryFee, 0, 10000, 'Flat delivery fee');
@@ -184,7 +219,10 @@ export default function Settings() {
     setSaving(true);
     try {
       await set(ref(db, 'settings'), {
+        systemName: cleanSystemName,
+        systemLogo: form.systemLogo || '',
         hubName: cleanHubName,
+        hubAddress: cleanHubAddress,
         hubLat: Number(form.hubLat),
         hubLng: Number(form.hubLng),
         deliveryFeeMode: form.deliveryFeeMode === 'distance' ? 'distance' : 'flat',
@@ -237,6 +275,70 @@ export default function Settings() {
       )}
 
       <form onSubmit={handleSave} className="space-y-6">
+        {/* System Branding Card */}
+        <div className="bg-white border border-charcoal-border rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 border-b border-charcoal-border pb-3">
+            <Store className="w-5 h-5 text-charcoal-header" />
+            <div>
+              <h2 className="font-bold text-sm text-charcoal-ink">System Branding (Name &amp; Logo)</h2>
+              <p className="text-[11px] text-charcoal-muted">
+                Customize the System Name and Logo displayed across Admin Web and the Customer Mobile App.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+            <div>
+              <label className="block text-xs font-semibold text-charcoal-ink mb-1">System Name</label>
+              <input
+                type="text"
+                maxLength={60}
+                value={form.systemName || ''}
+                onChange={(e) => setForm({ ...form, systemName: e.target.value })}
+                placeholder="CharCoal Hub"
+                className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2 text-xs text-charcoal-ink focus:outline-none focus:border-charcoal-header"
+                required
+              />
+            </div>
+
+            <div className="flex items-center gap-4">
+              {form.systemLogo ? (
+                <img
+                  src={form.systemLogo}
+                  alt="System Logo"
+                  className="w-14 h-14 object-contain rounded-xl border border-charcoal-border bg-white p-1 shrink-0"
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-xl border border-dashed border-charcoal-border bg-charcoal-canvas flex items-center justify-center text-[10px] text-charcoal-muted shrink-0">
+                  No Logo
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2 text-xs">
+                <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 bg-charcoal-canvas hover:bg-charcoal-border/50 border border-charcoal-border rounded-xl font-semibold text-charcoal-ink transition-colors">
+                  <Upload className="w-3.5 h-3.5" />
+                  {form.systemLogo ? 'Change Logo' : 'Upload Logo'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleLogoFileChange}
+                    className="hidden"
+                  />
+                </label>
+                {form.systemLogo && (
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, systemLogo: '' })}
+                    className="inline-flex items-center gap-1 px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl font-semibold transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Card 1: Warehouse / Hub Pin */}
           <div className="bg-white border border-charcoal-border rounded-2xl p-5 shadow-sm space-y-4">
@@ -255,6 +357,19 @@ export default function Settings() {
                 maxLength={100}
                 value={form.hubName}
                 onChange={(e) => setForm({ ...form, hubName: e.target.value })}
+                className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2 text-xs text-charcoal-ink focus:outline-none focus:border-charcoal-header"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-charcoal-ink mb-1">Store / Warehouse Address</label>
+              <input
+                type="text"
+                maxLength={200}
+                value={form.hubAddress || ''}
+                onChange={(e) => setForm({ ...form, hubAddress: e.target.value })}
+                placeholder="1055 Hardinan, Barangay Lamot 2, Calauan, Laguna"
                 className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2 text-xs text-charcoal-ink focus:outline-none focus:border-charcoal-header"
                 required
               />

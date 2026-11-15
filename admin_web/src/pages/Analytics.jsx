@@ -6,15 +6,28 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
+  PointElement,
+  LineElement,
+  Filler,
   Title,
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import { Bar, Line } from 'react-chartjs-2';
 import Papa from 'papaparse';
 import { Download } from 'lucide-react';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Filler,
+  Title,
+  Tooltip,
+  Legend
+);
 
 function toLocalDateKey(date) {
   const y = date.getFullYear();
@@ -133,10 +146,16 @@ export default function Analytics() {
       {
         label: 'Delivered Revenue (₱)',
         data: revenueSeries,
-        backgroundColor: 'rgba(36, 61, 60, 0.85)',
+        backgroundColor: 'rgba(62, 124, 89, 0.16)',
         borderColor: '#243D3C',
-        borderWidth: 2,
-        borderRadius: 6,
+        borderWidth: 2.5,
+        pointBackgroundColor: '#3E7C59',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0.35,
+        fill: true,
       },
     ],
   };
@@ -328,7 +347,7 @@ export default function Analytics() {
         <div className="bg-white border border-charcoal-border rounded-2xl p-5 shadow-sm">
           <h3 className="font-bold text-base text-charcoal-ink mb-4">Revenue Trend</h3>
           <div className="h-72 w-full">
-            <Bar data={revenueChartData} options={chartOptions} />
+            <Line data={revenueChartData} options={chartOptions} />
           </div>
         </div>
 

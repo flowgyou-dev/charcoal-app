@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'firebase_options.dart';
+import 'core/services/local_prefs_service.dart';
 import 'core/theme/app_theme.dart';
-import 'features/auth/screens/role_select_screen.dart';
+import 'features/auth/screens/customer_login_screen.dart';
 import 'features/auth/services/auth_service.dart';
 import 'features/order/screens/customer_shell_screen.dart';
-import 'features/driver/screens/driver_dashboard_screen.dart';
 
 void setupAppErrorHandling() {
   FlutterError.onError = (details) {
@@ -66,15 +66,29 @@ class CharCoalApp extends StatelessWidget {
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
+  Future<ResolvedSession?> _resolveCustomerSession(AuthService authService) async {
+    final remember = await LocalPrefsService.getRememberMe();
+    if (!remember) {
+      await authService.signOut();
+      return null;
+    }
+    final session = await authService.resolveCurrentSession();
+    if (session != null && session.role != 'customer') {
+      await authService.signOut();
+      return null;
+    }
+    return session;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (Firebase.apps.isEmpty) {
-      return const RoleSelectScreen();
+      return const CustomerLoginScreen();
     }
 
     final authService = AuthService();
     return FutureBuilder<ResolvedSession?>(
-      future: authService.resolveCurrentSession(),
+      future: _resolveCustomerSession(authService),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -98,10 +112,7 @@ class AuthGate extends StatelessWidget {
         if (session?.role == 'customer' && session?.customer != null) {
           return CustomerShellScreen(currentUser: session!.customer!);
         }
-        if (session?.role == 'driver' && session?.driver != null) {
-          return DriverDashboardScreen(driverProfile: session!.driver!);
-        }
-        return const RoleSelectScreen();
+        return const CustomerLoginScreen();
       },
     );
   }

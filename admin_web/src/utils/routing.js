@@ -1,7 +1,8 @@
 export const DEFAULT_HUB = {
   hubName: 'Charcoal Central Warehouse',
-  hubLat: 14.6042,
-  hubLng: 120.9822,
+  hubAddress: '1055 Hardinan, Barangay Lamot 2, Calauan, Laguna',
+  hubLat: 14.1489,
+  hubLng: 121.3156,
   deliveryFeeMode: 'flat',
   flatDeliveryFee: 0,
   distanceBaseFee: 40,
@@ -9,6 +10,8 @@ export const DEFAULT_HUB = {
   paymentQrImage: '',
   paymentAccountName: '',
   paymentAccountNumber: '',
+  systemName: 'CharCoal Hub',
+  systemLogo: '',
 };
 
 /**

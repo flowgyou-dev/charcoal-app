@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../auth/screens/role_select_screen.dart';
+import '../../auth/screens/customer_login_screen.dart';
+import '../../auth/screens/driver_login_screen.dart';
 import '../../auth/services/auth_service.dart';
 import '../../auth/widgets/password_requirements_indicator.dart';
 import '../../../core/theme/app_theme.dart';
@@ -371,9 +372,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await _authService.signOut();
       if (mounted) {
+        final target = widget.role == 'driver'
+            ? const DriverLoginScreen()
+            : const CustomerLoginScreen();
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const RoleSelectScreen()),
+          MaterialPageRoute(builder: (_) => target),
           (route) => false,
         );
       }
@@ -464,9 +468,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             content: Text('Your account has been permanently deleted.'),
           ),
         );
+        final target = widget.role == 'driver'
+            ? const DriverLoginScreen()
+            : const CustomerLoginScreen();
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const RoleSelectScreen()),
+          MaterialPageRoute(builder: (_) => target),
           (route) => false,
         );
       }

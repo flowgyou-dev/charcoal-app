@@ -6,6 +6,7 @@ import '../widgets/email_verification_dialog.dart';
 import '../widgets/password_reset_dialog.dart';
 import 'customer_register_screen.dart';
 import '../../order/screens/customer_shell_screen.dart';
+import '../../../core/services/local_prefs_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
 
@@ -19,10 +20,29 @@ class CustomerLoginScreen extends StatefulWidget {
 class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
-  final _authService = AuthService();
+  late final _authService = AuthService();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _rememberMe = true;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPrefs();
+  }
+
+  Future<void> _loadSavedPrefs() async {
+    final remember = await LocalPrefsService.getRememberMe();
+    final savedEmail = await LocalPrefsService.getRememberedEmail();
+    if (!mounted) return;
+    setState(() {
+      _rememberMe = remember;
+      if (remember && savedEmail.isNotEmpty) {
+        _emailCtrl.text = savedEmail;
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -59,6 +79,11 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
       final user = await _authService.signInCustomer(
         email: _emailCtrl.text,
         password: _passCtrl.text,
+      );
+
+      await LocalPrefsService.setRememberMe(_rememberMe);
+      await LocalPrefsService.setRememberedEmail(
+        _rememberMe ? _emailCtrl.text : '',
       );
 
       if (mounted) {
@@ -206,19 +231,49 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _handleForgotPassword,
-                      child: const Text(
-                        'Forgot Password?',
-                        style: TextStyle(
-                          color: AppTheme.emeraldGreen,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      InkWell(
+                        onTap: () => setState(() => _rememberMe = !_rememberMe),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: Checkbox(
+                                value: _rememberMe,
+                                activeColor: AppTheme.headerForest,
+                                onChanged: (val) =>
+                                    setState(() => _rememberMe = val ?? false),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Text(
+                              'Remember Me',
+                              style: TextStyle(
+                                color: AppTheme.inkCharcoal,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
+                      TextButton(
+                        onPressed: _handleForgotPassword,
+                        child: const Text(
+                          'Forgot Password?',
+                          style: TextStyle(
+                            color: AppTheme.emeraldGreen,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 10),
 
@@ -232,14 +287,15 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : const Text('LOG IN AS CUSTOMER'),
+                          : const Text('LOG IN'),
                     ),
                   ),
 
                   const SizedBox(height: 22),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       const Text(
                         "Don't have an account? ",

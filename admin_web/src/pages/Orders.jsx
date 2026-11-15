@@ -14,8 +14,9 @@ import {
   Download,
   Printer,
 } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
-export default function Orders() {
+export default function Orders({ focusedOrderId = null, onClearFocusedOrder }) {
   const [orders, setOrders] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [filter, setFilter] = useState('ALL');
@@ -35,6 +36,17 @@ export default function Orders() {
 
   // Printable Waybill modal
   const [waybillOrder, setWaybillOrder] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    if (focusedOrderId) {
+      setFilter('ALL');
+      setDateFilter('');
+      setSearchQuery(focusedOrderId);
+      setCurrentPage(1);
+    }
+  }, [focusedOrderId]);
 
   const ALLOWED_STATUSES = ['Pending', 'Confirmed', 'Out for Delivery', 'Delivered', 'Cancelled'];
 
@@ -335,12 +347,28 @@ export default function Orders() {
       </div>
 
       {/* Orders Table */}
+      {focusedOrderId && (
+        <div className="p-3 rounded-xl bg-[#E8F3EC] border border-[#B7DFC7] text-xs text-charcoal-eco font-semibold flex items-center justify-between">
+          <span>Showing order selected from Dashboard ({focusedOrderId})</span>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('');
+              if (onClearFocusedOrder) onClearFocusedOrder();
+            }}
+            className="px-2.5 py-1 bg-white border border-[#B7DFC7] rounded-lg text-charcoal-header hover:bg-charcoal-canvas"
+          >
+            Show All Orders
+          </button>
+        </div>
+      )}
       <div className="bg-white border border-charcoal-border rounded-2xl shadow-sm overflow-hidden">
         {filteredOrders.length === 0 ? (
           <div className="py-16 text-center text-charcoal-muted text-sm">
             No orders match the current filter.
           </div>
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs min-w-[920px]">
               <thead className="bg-charcoal-header text-white font-semibold uppercase tracking-wider">
@@ -355,10 +383,16 @@ export default function Orders() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-charcoal-border">
-                {filteredOrders.map((order) => {
+                {filteredOrders
+                  .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                  .map((order) => {
                   const isOnline = order.paymentMethod === 'ONLINE_QR';
+                  const isFocused = focusedOrderId && order.id === focusedOrderId;
                   return (
-                    <tr key={order.id} className="hover:bg-[#F8FAFA] transition-colors">
+                    <tr
+                      key={order.id}
+                      className={`${isFocused ? 'bg-[#E8F3EC]/60' : 'hover:bg-[#F8FAFA]'} transition-colors`}
+                    >
                       <td className="p-4">
                         <span className="font-mono font-bold text-charcoal-header text-sm">
                           {order.displayId || order.id}
@@ -513,6 +547,14 @@ export default function Orders() {
               </tbody>
             </table>
           </div>
+          <Pagination
+            totalItems={filteredOrders.length}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+          />
+          </>
         )}
       </div>
 

@@ -41,6 +41,20 @@ android {
         }
     }
 
+    flavorDimensions += "app"
+    productFlavors {
+        create("customer") {
+            dimension = "app"
+            applicationId = "com.coal.charcoal_app"
+            manifestPlaceholders["appName"] = "CharCoal Express"
+        }
+        create("rider") {
+            dimension = "app"
+            applicationId = "com.coal.charcoal_rider"
+            manifestPlaceholders["appName"] = "CharCoal Rider"
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

@@ -9,6 +9,7 @@ import {
   validatePositivePrice,
 } from '../utils/validators';
 import { PlusCircle, Edit3, History, AlertCircle } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
 export default function Inventory() {
   const [inventory, setInventory] = useState(null);
@@ -29,6 +30,8 @@ export default function Inventory() {
 
   const [modalError, setModalError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const invRef = ref(db, 'inventory');
@@ -283,6 +286,7 @@ export default function Inventory() {
             No stock adjustments recorded yet.
           </div>
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
@@ -295,7 +299,9 @@ export default function Inventory() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-charcoal-border">
-                {history.map((item) => {
+                {history
+                  .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                  .map((item) => {
                   const isAddition = item.type === 'RESTOCK' || item.type === 'CANCELLATION_RESTORE';
                   return (
                     <tr key={item.id} className="hover:bg-[#F8FAFA] transition-colors">
@@ -332,6 +338,14 @@ export default function Inventory() {
               </tbody>
             </table>
           </div>
+          <Pagination
+            totalItems={history.length}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+          />
+          </>
         )}
       </div>
 

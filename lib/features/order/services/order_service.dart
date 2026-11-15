@@ -31,6 +31,30 @@ class OrderService {
       throw Exception('Please complete your Delivery Address (at least 10 characters).');
     }
 
+    // 0. Enforce maximum of 2 concurrent active orders per customer
+    final existingSnap = await _database
+        .ref(AppConstants.dbOrders)
+        .orderByChild('customerId')
+        .equalTo(customerId)
+        .get();
+    if (existingSnap.exists && existingSnap.value is Map) {
+      final raw = existingSnap.value as Map<dynamic, dynamic>;
+      int activeCount = 0;
+      for (final entry in raw.values) {
+        if (entry is Map) {
+          final status = entry['status']?.toString() ?? 'Pending';
+          if (status != 'Delivered' && status != 'Cancelled') {
+            activeCount++;
+          }
+        }
+      }
+      if (activeCount >= 2) {
+        throw Exception(
+          'You already have 2 active orders in progress. Please wait for one to be delivered or cancelled before placing another.',
+        );
+      }
+    }
+
     final isOnline = paymentMethod == 'ONLINE_QR';
     String? refKey;
     if (isOnline) {

@@ -58,50 +58,115 @@ class CustomerDashboardScreen extends StatelessWidget {
           final allOrders = snapshot.data ?? [];
           final activeOrders = allOrders
               .where((o) => o.status != 'Delivered' && o.status != 'Cancelled')
+              .take(2)
               .toList();
-          final currentOrder =
-              activeOrders.isNotEmpty ? activeOrders.first : null;
 
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                child: Text(
-                  'Good day, ${currentUser.name}',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.inkCharcoal,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Good day, ${currentUser.name}',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.inkCharcoal,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (activeOrders.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.headerForest.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${activeOrders.length}/2 Active',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.headerForest,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
-              if (currentOrder == null)
+              if (activeOrders.isEmpty)
                 _buildEmptyOrderCard()
-              else
-                _buildCurrentOrderCard(context, currentOrder),
-              if (currentOrder != null) ...[
+              else ...[
+                for (int i = 0; i < activeOrders.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 14),
+                  _buildCurrentOrderCard(
+                    context,
+                    activeOrders[i],
+                    orderIndex: activeOrders.length > 1 ? i + 1 : null,
+                    totalActive: activeOrders.length,
+                  ),
+                ],
                 const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.emeraldGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                if (activeOrders.length < 2)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.emeraldGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: onGoToOrder,
+                      icon: const Icon(Icons.add_shopping_cart),
+                      label: const Text(
+                        'Order More Charcoal',
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
-                    onPressed: onGoToOrder,
-                    icon: const Icon(Icons.add_shopping_cart),
-                    label: const Text(
-                      'Order More Charcoal',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.headerForest.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppTheme.headerForest.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 18,
+                          color: AppTheme.headerForest,
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'You have reached the maximum of 2 concurrent active orders.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.headerForest,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
               ],
             ],
           );
@@ -173,7 +238,12 @@ class CustomerDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCurrentOrderCard(BuildContext context, CharcoalOrder order) {
+  Widget _buildCurrentOrderCard(
+    BuildContext context,
+    CharcoalOrder order, {
+    int? orderIndex,
+    int totalActive = 1,
+  }) {
     final step = _stepForStatus(order.status);
     final hasDriverPhone =
         order.driverPhone != null && order.driverPhone!.trim().isNotEmpty;
@@ -194,9 +264,11 @@ class CustomerDashboardScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'CURRENT ORDER',
-                    style: TextStyle(
+                  Text(
+                    orderIndex != null
+                        ? 'CURRENT ORDER ($orderIndex of $totalActive)'
+                        : 'CURRENT ORDER',
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: AppTheme.mutedSlate,

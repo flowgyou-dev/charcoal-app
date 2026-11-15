@@ -21,6 +21,7 @@ import {
   ShoppingBag,
   ShieldAlert,
 } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
 export default function Customers() {
   const [customers, setCustomers] = useState([]);
@@ -40,6 +41,8 @@ export default function Customers() {
   const [toggleCustomerTarget, setToggleCustomerTarget] = useState(null);
   const [deleteCustomerTarget, setDeleteCustomerTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const unsubUsers = onValue(
@@ -202,7 +205,10 @@ export default function Customers() {
           {['ALL', 'ACTIVE', 'DEACTIVATED'].map((f) => (
             <button
               key={f}
-              onClick={() => setStatusFilter(f)}
+              onClick={() => {
+                setStatusFilter(f);
+                setCurrentPage(1);
+              }}
               className={`px-3 py-1.5 rounded-lg font-semibold border transition-colors ${
                 statusFilter === f
                   ? 'bg-charcoal-header text-white border-charcoal-header'
@@ -246,7 +252,10 @@ export default function Customers() {
           type="text"
           maxLength={100}
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
           placeholder="Search customer name, email, or phone number..."
           className="w-full bg-white border border-charcoal-border rounded-xl pl-10 pr-4 py-2 text-xs text-charcoal-ink focus:outline-none focus:border-charcoal-header"
         />
@@ -262,6 +271,7 @@ export default function Customers() {
             <span>No matching customer accounts found.</span>
           </div>
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs min-w-[820px]">
               <thead className="bg-charcoal-header text-white font-semibold uppercase tracking-wider">
@@ -275,7 +285,9 @@ export default function Customers() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-charcoal-border">
-                {filteredCustomers.map((customer) => {
+                {filteredCustomers
+                  .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                  .map((customer) => {
                   const isActive = customer.isActive !== false;
                   const custOrders = orders.filter((o) => o.customerId === customer.id);
                   const activeCount = custOrders.filter(
@@ -390,6 +402,14 @@ export default function Customers() {
               </tbody>
             </table>
           </div>
+          <Pagination
+            totalItems={filteredCustomers.length}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+          />
+          </>
         )}
       </div>
 

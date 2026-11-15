@@ -40,6 +40,8 @@ export default function App() {
   const [isDbConnected, setIsDbConnected] = useState(true);
   const [alerts, setAlerts] = useState([]);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [focusedOrderId, setFocusedOrderId] = useState(null);
+  const [branding, setBranding] = useState({ systemName: 'CharCoal Hub', systemLogo: '' });
   const isSettingUpRef = useRef(false);
 
   useEffect(() => {
@@ -145,10 +147,21 @@ export default function App() {
       recomputeAlerts();
     });
 
+    const unsubSettings = onValue(ref(db, 'settings'), (snap) => {
+      if (snap.exists()) {
+        const val = snap.val();
+        const name = (val.systemName || '').trim() || 'CharCoal Hub';
+        const logo = val.systemLogo || '';
+        setBranding({ systemName: name, systemLogo: logo });
+        document.title = `${name} - Admin Web App`;
+      }
+    });
+
     return () => {
       unsubConn();
       unsubInv();
       unsubOrders();
+      unsubSettings();
     };
   }, [adminUser]);
 
@@ -188,14 +201,29 @@ export default function App() {
     { id: 'settings', name: 'Shop & QR Settings', icon: SettingsIcon },
   ];
 
+  const handleSelectOrderFromDashboard = (orderId) => {
+    setFocusedOrderId(orderId);
+    setActiveTab('orders');
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard setActiveTab={setActiveTab} />;
+        return (
+          <Dashboard
+            setActiveTab={setActiveTab}
+            onSelectOrder={handleSelectOrderFromDashboard}
+          />
+        );
       case 'inventory':
         return <Inventory />;
       case 'orders':
-        return <Orders />;
+        return (
+          <Orders
+            focusedOrderId={focusedOrderId}
+            onClearFocusedOrder={() => setFocusedOrderId(null)}
+          />
+        );
       case 'customers':
         return <Customers />;
       case 'drivers':
@@ -230,11 +258,21 @@ export default function App() {
         <div>
           <div className="flex items-center justify-between px-3 py-3 mb-6 border-b border-charcoal-hover">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-charcoal-eco flex items-center justify-center text-white shadow-md">
-                <Flame className="w-6 h-6" />
-              </div>
+              {branding.systemLogo ? (
+                <img
+                  src={branding.systemLogo}
+                  alt={branding.systemName}
+                  className="w-10 h-10 rounded-2xl object-contain bg-white p-1 shadow-md"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-2xl bg-charcoal-eco flex items-center justify-center text-white shadow-md">
+                  <Flame className="w-6 h-6" />
+                </div>
+              )}
               <div>
-                <h2 className="font-extrabold text-base tracking-tight text-white">CharCoal Hub</h2>
+                <h2 className="font-extrabold text-base tracking-tight text-white truncate max-w-[140px]">
+                  {branding.systemName}
+                </h2>
                 <span
                   className={`text-[11px] font-semibold flex items-center gap-1 ${
                     isDbConnected ? 'text-[#B7DFC7]' : 'text-amber-300'

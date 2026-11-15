@@ -13,7 +13,9 @@ class AppConstants {
   static const String dbUsers = 'users';
   static const String dbSettings = 'settings';
 
-  // Default Central Hub Manila coordinates
-  static const double defaultHubLat = 14.6042;
-  static const double defaultHubLng = 120.9822;
+  // Default Hub coordinates (1055 Hardinan, Barangay Lamot 2, Calauan, Laguna)
+  static const double defaultHubLat = 14.1489;
+  static const double defaultHubLng = 121.3156;
+  static const String defaultHubAddress =
+      '1055 Hardinan, Barangay Lamot 2, Calauan, Laguna';
 }

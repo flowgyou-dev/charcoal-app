@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/models/shop_settings_model.dart';
+import '../../../core/services/settings_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/models/user_model.dart';
 import '../../profile/screens/profile_screen.dart';
@@ -30,7 +32,6 @@ class _CustomerShellScreenState extends State<CustomerShellScreen> {
     'Home',
     'Order',
     'My Orders',
-    'Profile',
   ];
 
   void _selectTab(int index) {
@@ -51,76 +52,62 @@ class _CustomerShellScreenState extends State<CustomerShellScreen> {
     );
   }
 
-  Widget _buildBrandLogo() {
+  Widget _buildBrandLogo(ShopSettings settings) {
+    final logoBytes = settings.decodeSystemLogoBytes();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Image.asset(
-        'assets/images/logo.png',
-        height: 30,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "oriel & leni's",
-              style: TextStyle(
-                fontSize: 7,
-                fontStyle: FontStyle.italic,
-                color: AppTheme.inkCharcoal,
-                height: 1.0,
+      child: logoBytes != null
+          ? Image.memory(
+              logoBytes,
+              height: 30,
+              fit: BoxFit.contain,
+            )
+          : Image.asset(
+              'assets/images/logo.png',
+              height: 30,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Text(
+                settings.systemName,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.inkCharcoal,
+                ),
               ),
             ),
-            Text(
-              'CHARCOAL',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-                color: AppTheme.inkCharcoal,
-                letterSpacing: 0.6,
-                height: 1.1,
-              ),
-            ),
-            Text(
-              'retailer',
-              style: TextStyle(
-                fontSize: 6.5,
-                fontStyle: FontStyle.italic,
-                color: AppTheme.inkCharcoal,
-                height: 1.0,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        titleSpacing: 12,
-        title: Row(
-          children: [
-            _buildBrandLogo(),
-            Expanded(
-              child: Text(
-                _titles[_tabIndex],
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+    return StreamBuilder<ShopSettings>(
+      stream: SettingsService().settingsStream,
+      builder: (context, settingsSnap) {
+        final settings = settingsSnap.data ?? const ShopSettings();
+        return Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            titleSpacing: 12,
+            title: Row(
+              children: [
+                _buildBrandLogo(settings),
+                Expanded(
+                  child: Text(
+                    _titles[_tabIndex],
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.receipt_long, color: Colors.white),
@@ -206,6 +193,8 @@ class _CustomerShellScreenState extends State<CustomerShellScreen> {
           ),
         ],
       ),
+        );
+      },
     );
   }
 }

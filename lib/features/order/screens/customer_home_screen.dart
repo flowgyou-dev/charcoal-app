@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/models/shop_settings_model.dart';
+import '../../../core/services/local_prefs_service.dart';
 import '../../../core/services/routing_service.dart';
 import '../../../core/services/settings_service.dart';
 import '../../../core/theme/app_theme.dart';
@@ -16,6 +17,7 @@ import '../../auth/models/user_model.dart';
 import '../../inventory/models/inventory_model.dart';
 import '../../inventory/services/inventory_service.dart';
 import '../../profile/screens/profile_screen.dart';
+import '../models/order_model.dart';
 import '../services/order_service.dart';
 import '../services/receipt_ocr_service.dart';
 import '../widgets/delivery_address_sheet.dart';
@@ -320,6 +322,32 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     }
   }
 
+  Future<void> _downloadQrImage(Uint8List bytes) async {
+    try {
+      final fileName =
+          'CharCoal_Payment_QR_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final savedLocation =
+          await LocalPrefsService.saveImageToGallery(bytes, fileName);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('QR Code saved to $savedLocation'),
+            backgroundColor: AppTheme.emeraldGreen,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unable to save QR Code: $e'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    }
+  }
+
   void _showQrZoomDialog(Uint8List bytes, ShopSettings settings) {
     showDialog(
       context: context,
@@ -363,9 +391,26 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 ),
               ],
               const SizedBox(height: 14),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Close'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.emeraldGreen,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 40),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    ),
+                    onPressed: () => _downloadQrImage(bytes),
+                    icon: const Icon(Icons.download_rounded, size: 18),
+                    label: const Text('Download QR'),
+                  ),
+                  const SizedBox(width: 10),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Close'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -480,44 +525,87 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         settings: settings,
                       ),
                       const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: (_isOrdering || inv.currentStock <= 0)
-                            ? null
-                            : () {
-                                if (_quantity != safeQty) {
-                                  setState(() => _quantity = safeQty);
-                                }
-                                _handlePlaceOrder(inv);
-                              },
-                        child: _isOrdering
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                      StreamBuilder<List<CharcoalOrder>>(
+                        stream: _orderService.streamCustomerOrders(widget.currentUser.uid),
+                        builder: (context, orderSnap) {
+                          final activeCount = (orderSnap.data ?? [])
+                              .where((o) => o.status != 'Delivered' && o.status != 'Cancelled')
+                              .length;
+                          final limitReached = activeCount >= 2;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (limitReached) ...[
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.shade50,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(color: Colors.amber.shade300),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.info_outline,
+                                          size: 18, color: Colors.amber.shade900),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          'You already have 2 active orders in progress. Wait for one to finish before placing a new order.',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.amber.shade900,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              )
-                            : Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    inv.currentStock <= 0
-                                        ? 'OUT OF STOCK'
-                                        : (_paymentMethod == 'ONLINE_QR'
-                                            ? 'PLACE ORDER (ONLINE QR)'
-                                            : 'PLACE ORDER (COD)'),
-                                  ),
-                                  Text(
-                                    '₱ ${grandTotal.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
+                              ],
+                              ElevatedButton(
+                                onPressed: (_isOrdering || inv.currentStock <= 0 || limitReached)
+                                    ? null
+                                    : () {
+                                        if (_quantity != safeQty) {
+                                          setState(() => _quantity = safeQty);
+                                        }
+                                        _handlePlaceOrder(inv);
+                                      },
+                                child: _isOrdering
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            limitReached
+                                                ? 'MAX 2 ACTIVE ORDERS REACHED'
+                                                : inv.currentStock <= 0
+                                                    ? 'OUT OF STOCK'
+                                                    : (_paymentMethod == 'ONLINE_QR'
+                                                        ? 'PLACE ORDER (ONLINE QR)'
+                                                        : 'PLACE ORDER (COD)'),
+                                          ),
+                                          Text(
+                                            '₱ ${grandTotal.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                              fontFamily: 'monospace',
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                               ),
+                            ],
+                          );
+                        },
                       ),
                       const SizedBox(height: 20),
                     ],
@@ -1094,6 +1182,28 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.emeraldGreen,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppTheme.headerForest,
+                                side: const BorderSide(color: AppTheme.headerForest),
+                                minimumSize: const Size(0, 34),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              onPressed: () => _downloadQrImage(qrBytes),
+                              icon: const Icon(Icons.download_rounded, size: 16),
+                              label: const Text(
+                                'Download QR',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],

@@ -1,8 +1,13 @@
+import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 import '../constants/app_constants.dart';
 
 class ShopSettings {
+  final String systemName;
+  final String systemLogo;
   final String hubName;
+  final String hubAddress;
   final double hubLat;
   final double hubLng;
   final String deliveryFeeMode; // 'flat' | 'distance'
@@ -15,7 +20,10 @@ class ShopSettings {
   final int maxOrderSacks;
 
   const ShopSettings({
+    this.systemName = 'CharCoal Express',
+    this.systemLogo = '',
     this.hubName = 'Charcoal Central Warehouse',
+    this.hubAddress = AppConstants.defaultHubAddress,
     this.hubLat = AppConstants.defaultHubLat,
     this.hubLng = AppConstants.defaultHubLng,
     this.deliveryFeeMode = 'flat',
@@ -29,10 +37,26 @@ class ShopSettings {
   });
 
   bool get hasPaymentQr => paymentQrImage.trim().isNotEmpty;
+  bool get hasSystemLogo => systemLogo.trim().isNotEmpty;
+
+  Uint8List? decodeSystemLogoBytes() {
+    if (!hasSystemLogo) return null;
+    try {
+      final raw = systemLogo.contains(',') ? systemLogo.split(',').last : systemLogo;
+      return base64Decode(raw.trim());
+    } catch (_) {
+      return null;
+    }
+  }
 
   factory ShopSettings.fromMap(Map<dynamic, dynamic> map) {
+    final rawSystemName = map['systemName']?.toString().trim() ?? '';
+    final rawHubAddress = map['hubAddress']?.toString().trim() ?? '';
     return ShopSettings(
+      systemName: rawSystemName.isNotEmpty ? rawSystemName : 'CharCoal Express',
+      systemLogo: map['systemLogo']?.toString() ?? '',
       hubName: map['hubName']?.toString() ?? 'Charcoal Central Warehouse',
+      hubAddress: rawHubAddress.isNotEmpty ? rawHubAddress : AppConstants.defaultHubAddress,
       hubLat: double.tryParse(map['hubLat']?.toString() ?? '') ?? AppConstants.defaultHubLat,
       hubLng: double.tryParse(map['hubLng']?.toString() ?? '') ?? AppConstants.defaultHubLng,
       deliveryFeeMode: map['deliveryFeeMode']?.toString() == 'distance' ? 'distance' : 'flat',
