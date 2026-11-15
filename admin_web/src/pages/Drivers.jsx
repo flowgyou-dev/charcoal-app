@@ -98,6 +98,8 @@ export default function Drivers() {
   const [firstName, setFirstName] = useState('');
   const [middleName, setMiddleName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [editName, setEditName] = useState('');
+  const [editVehicle, setEditVehicle] = useState('');
   const [phone, setPhone] = useState('');
   const [vehicleType, setVehicleType] = useState('Motorcycle');
   const [vehicleBrand, setVehicleBrand] = useState('Honda');
@@ -314,9 +316,9 @@ export default function Drivers() {
   const openEditModal = (driver) => {
     setFormError('');
     setEditingDriver(driver);
-    setName(driver.name || '');
+    setEditName(driver.name || '');
     setPhone(formatDigitsOnly(driver.phone || '', 12));
-    setVehicle(driver.vehicle || 'Motorcycle');
+    setEditVehicle(driver.vehicle || 'Motorcycle');
     setPlateNumber(formatPlateNumber(driver.plateNumber || ''));
   };
 
@@ -325,14 +327,14 @@ export default function Drivers() {
     if (!editingDriver || isSubmitting) return;
     setFormError('');
 
-    const nameErr = validateName(name, 'Driver Name');
+    const nameErr = validateName(editName, 'Driver Name');
     if (nameErr) return setFormError(nameErr);
     const phoneErr = validatePhPhone(phone);
     if (phoneErr) return setFormError(phoneErr);
 
-    const cleanName = sanitizeText(name);
+    const cleanName = sanitizeText(editName);
     const cleanPhone = formatDigitsOnly(phone, 12);
-    const cleanVehicle = sanitizeText(vehicle);
+    const cleanVehicle = sanitizeText(editVehicle);
     if (cleanVehicle.length < 2 || cleanVehicle.length > 60) {
       return setFormError('Vehicle type must be 2–60 characters.');
     }
@@ -437,11 +439,6 @@ export default function Drivers() {
         <button
           onClick={() => {
             setFormError('');
-            setName('');
-            setPhone('');
-            setVehicle('Motorcycle (Honda Wave 110)');
-            setPlateNumber('');
-            setEmail('');
             setFirstName('');
             setMiddleName('');
             setLastName('');
@@ -947,8 +944,8 @@ export default function Drivers() {
                   type="text"
                   required
                   maxLength={60}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
                   className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5"
                 />
               </div>
@@ -971,8 +968,8 @@ export default function Drivers() {
                   type="text"
                   required
                   maxLength={60}
-                  value={vehicle}
-                  onChange={(e) => setVehicle(e.target.value)}
+                  value={editVehicle}
+                  onChange={(e) => setEditVehicle(e.target.value)}
                   className="w-full bg-charcoal-canvas border border-charcoal-border rounded-xl px-3.5 py-2.5"
                 />
               </div>
